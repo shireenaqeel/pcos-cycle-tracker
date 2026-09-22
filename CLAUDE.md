@@ -220,6 +220,24 @@ attempt this for the basic version; there's nothing to pretrain on yet.
   (inactive). Before any `gh` or push operation, confirm the active account
   is `shireenaqeel` — `gh auth switch` changes it, and a wrong-account push
   is the easy mistake here.
+- **A plain `git push` fails with `denied to psai11` (403).** The system
+  gitconfig shipped with Xcode Command Line Tools sets `osxkeychain` as the
+  credential helper, and that keychain entry holds `psai11`'s token — it
+  answers first no matter which account `gh` has active. `gh repo create
+  --push` works (it uses `gh`'s own auth); `git push` does not. Until the
+  keychain entry is replaced, push with the helper chain reset:
+
+  ```sh
+  git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin main
+  ```
+
+  Making this permanent is a one-line repo-local config, deliberately not
+  set yet so nothing on this machine changes for `psai11`:
+
+  ```sh
+  git config --local --replace-all credential.https://github.com.helper ""
+  git config --local --add credential.https://github.com.helper '!gh auth git-credential'
+  ```
 - `git push` should work directly from a Claude Code session on this
   project once the remote exists — don't route around that or ask the user
   to push manually as a matter of course.
