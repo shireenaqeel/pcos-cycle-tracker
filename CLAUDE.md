@@ -304,6 +304,34 @@ zero cycles recorded there is no anchor, and anchoring to "today" would imply
 the app knows where in a cycle someone is — it doesn't. That case shows an
 empty state inviting a log or backfill instead of a fabricated window.
 
+## Testing
+
+`npm test` (jest, `jest-expo` preset) and `npm run typecheck`, both from
+`mobile/`. Tests live in `src/engine/__tests__/*-test.ts` — the preset
+matches the `-test.ts` suffix.
+
+Test files import `describe`/`it`/`expect` from `@jest/globals` rather than
+relying on ambient globals. This is deliberate: TypeScript 6 does not
+auto-include `@types/jest` here, and the explicit import keeps the types
+working without a `types` array in `tsconfig.json` or an extra dependency.
+
+What the 22 tests actually pin down, since the risk with this engine is that
+a wrong answer still looks like a plausible number of days:
+
+- The probit approximation against independently-verified quantiles,
+  including its branch-switch point at `p = 0.02425` and both tails.
+- Cold start returns the phenotype prior; `null` and `'unknown'` are
+  identical; a less certain phenotype yields a wider window.
+- A logged 30-day gap moves a `regular` prior to exactly 28.2 days, and the
+  same gap entered as backfilled moves it only to 28.0714 — the
+  hand-computable proof that `BACKFILL_VARIANCE_INFLATION` is doing its job.
+- A gap counts as remembered if *either* end was backfilled.
+- The posterior converges toward observed lengths and the window narrows as
+  evidence accumulates.
+- Out-of-order logs, duplicate start dates, and a single lone log.
+- Gaps spanning a daylight-saving transition and a year boundary measure as
+  whole days — the property that makes UTC parsing safe inside the predictor.
+
 ## Roadmap — staged
 
 Ordered so each stage makes the next one safer. Confirmed working on a real
@@ -318,11 +346,8 @@ builds on a known-good base.
    under an edit. The screen splits into a loader and a `CycleEditor` that
    takes a non-null cycle as a prop, so there is no nullable form state to
    guard against.
-2. **Engine tests** — `stats.ts` and `predictor.ts` have none. Pin the
-   behavior that matters: prior-only cold start, backfill inflation actually
-   widening the interval, posterior converging toward observed lengths,
-   out-of-order and duplicate dates. Untested Bayesian math is dangerous
-   precisely because wrong answers still look plausible.
+2. ~~**Engine tests**~~ — *done.* 22 tests over `stats.ts` and
+   `predictor.ts` (see "Testing" below).
 3. **Symptom logging** — a screen over `daily_symptom_log`. Write-only;
    predictor untouched.
 4. **Education content** — bundled JSON under `mobile/src/content/`, matched
@@ -338,6 +363,12 @@ builds on a known-good base.
 
 Before showing this to anyone: `app.json` still carries the template's
 `name`/`slug` of `"mobile"`, and there is no README.
+
+**`npm audit` reports 10 moderate vulnerabilities — leave them.** All ten
+trace to one root: `uuid`'s missing buffer bounds check, reached via
+`xcode` → `@expo/config-plugins` → the rest of Expo's toolchain. That is
+build tooling, not code that ships to the device, and `npm audit fix --force`
+would break the SDK 57 pin. It clears when Expo bumps the dependency.
 
 ## Open questions / pending decisions
 
