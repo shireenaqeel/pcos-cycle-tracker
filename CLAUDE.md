@@ -310,10 +310,14 @@ Ordered so each stage makes the next one safer. Confirmed working on a real
 device via Expo Go before this roadmap was written, so everything below
 builds on a known-good base.
 
-1. **Correctable data** — edit and delete a cycle; set an end date after the
-   fact. *Today a mistyped backfill date is permanent and silently skews the
-   posterior forever.* `entry_source` stays immutable through an edit:
-   correcting a remembered date does not make it a real-time log.
+1. ~~**Correctable data**~~ — *done.* `CycleDetailScreen`, reached by tapping
+   any history row on Home: edit start date, add/clear an end date, change
+   flow, or delete with a confirmation. `updateCycleLog` deliberately cannot
+   write `entry_source` — correcting a remembered date does not promote it to
+   a real-time log, and the predictor's trust in the row must not shift
+   under an edit. The screen splits into a loader and a `CycleEditor` that
+   takes a non-null cycle as a prop, so there is no nullable form state to
+   guard against.
 2. **Engine tests** — `stats.ts` and `predictor.ts` have none. Pin the
    behavior that matters: prior-only cold start, backfill inflation actually
    widening the interval, posterior converging toward observed lengths,

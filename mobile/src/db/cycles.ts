@@ -53,6 +53,38 @@ export async function insertCycleLog(input: {
   };
 }
 
+export async function getCycleLog(id: string): Promise<CycleLog | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<CycleLogRow>(`SELECT * FROM cycle_log WHERE id = ?`, id);
+  return row === null ? null : rowToCycleLog(row);
+}
+
+/**
+ * `entry_source` is deliberately absent: correcting a date you remembered
+ * wrongly doesn't turn it into something you logged as it happened, and the
+ * predictor's trust in the row must not silently change under an edit.
+ */
+export async function updateCycleLog(input: {
+  id: string;
+  startDate: string;
+  endDate: string | null;
+  flowIntensity: CycleLog['flowIntensity'];
+}): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `UPDATE cycle_log SET start_date = ?, end_date = ?, flow_intensity = ? WHERE id = ?`,
+    input.startDate,
+    input.endDate,
+    input.flowIntensity,
+    input.id
+  );
+}
+
+export async function deleteCycleLog(id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(`DELETE FROM cycle_log WHERE id = ?`, id);
+}
+
 /** All cycles for a user, oldest first — the shape the prediction engine wants. */
 export async function listCycleLogs(userId: string): Promise<CycleLog[]> {
   const db = await getDb();

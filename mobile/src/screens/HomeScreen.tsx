@@ -80,15 +80,20 @@ export function HomeScreen({ navigation }: Props) {
       {cycles.length > 0 && (
         <View style={styles.history}>
           <Text style={styles.historyTitle}>History</Text>
+          <Text style={styles.historyHint}>Tap any entry to correct or remove it.</Text>
           {[...cycles].reverse().map((cycle) => (
-            <View key={cycle.id} style={styles.historyRow}>
+            <Pressable
+              key={cycle.id}
+              style={({ pressed }) => [styles.historyRow, pressed && styles.historyRowPressed]}
+              onPress={() => navigation.navigate('CycleDetail', { cycleId: cycle.id })}
+            >
               <Text style={styles.historyDate}>
                 {format(fromIsoDate(cycle.startDate), 'MMM d, yyyy')}
               </Text>
               <Text style={styles.historySource}>
-                {cycle.entrySource === 'backfilled' ? 'from memory' : 'logged live'}
+                {cycle.entrySource === 'backfilled' ? 'from memory' : 'logged live'} ›
               </Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       )}
@@ -224,11 +229,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
   },
+  historyHint: {
+    color: colors.textFaint,
+    fontSize: 12,
+    marginBottom: spacing.sm,
+  },
   historyRow: {
     alignItems: 'center',
+    borderRadius: radius.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.sm,
+  },
+  historyRowPressed: {
+    backgroundColor: colors.accentSoft,
   },
   historyDate: {
     color: colors.text,

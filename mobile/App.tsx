@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { getOrCreateProfile } from './src/db/profile';
 import type { RootStackParamList } from './src/navigation/types';
 import { BackfillScreen } from './src/screens/BackfillScreen';
+import { CycleDetailScreen } from './src/screens/CycleDetailScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LogCycleScreen } from './src/screens/LogCycleScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -61,6 +62,11 @@ export default function App() {
             name="LogCycle"
             component={LogCycleScreen}
             options={{ title: 'Log a cycle' }}
+          />
+          <Stack.Screen
+            name="CycleDetail"
+            component={CycleDetailScreen}
+            options={{ title: 'Edit cycle' }}
           />
         </Stack.Navigator>
       </NavigationContainer>
