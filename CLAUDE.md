@@ -34,8 +34,14 @@ Already built and working — do not redo this, extend it:
 - `mobile/App.tsx` — native-stack navigator over the four MVP screens,
   gated on an initial `getOrCreateProfile()` load.
 - `mobile/src/navigation/types.ts` — `RootStackParamList` for typed routes.
-- `mobile/src/screens/` — `OnboardingScreen`, `HomeScreen`,
-  `BackfillScreen`, `LogCycleScreen` (all four MVP screens).
+- `mobile/src/screens/` — `OnboardingScreen`, `HomeScreen`, `BackfillScreen`,
+  `LogCycleScreen`, `CycleDetailScreen`, `SymptomLogScreen`, `LearnScreen`,
+  `AccuracyScreen`.
+- `mobile/src/db/symptoms.ts`, `predictions.ts` — access for
+  `daily_symptom_log` and `prediction_snapshot`.
+- `mobile/src/engine/accuracy.ts` — scores stored predictions against what
+  actually happened.
+- `mobile/src/content/` — bundled education JSON and phenotype filtering.
 - `mobile/src/components/DateGrid.tsx` — dependency-free month calendar
   built on `date-fns`; used for every date entry. No date-picker library is
   installed and none is needed.
@@ -44,8 +50,8 @@ Already built and working — do not redo this, extend it:
   handling" below.
 - `mobile/src/theme.ts` — shared colors, spacing, radii.
 
-Not yet built: the education content module, the symptom-log screen, the
-server, a root-level git repo, or the GitHub repo.
+Not built, deliberately: the server (nothing needs it). `daily_symptom_log`
+and `prediction_snapshot` are now both written and read.
 
 ### Date handling — non-obvious, easy to regress
 
@@ -123,8 +129,8 @@ it less than a real-time log (`BACKFILL_VARIANCE_INFLATION` in
 | `basal_temp`   | real/null |                                              |
 | `mood`         | text/null |                                              |
 
-Exists in schema, not yet read by the predictor — planned refinement signal,
-not in MVP scope.
+Written and read by `SymptomLogScreen` via `db/symptoms.ts`. **Not consumed by
+the predictor, on purpose** — see "What the engine deliberately does not do".
 
 ### `prediction_snapshot`
 
@@ -138,9 +144,10 @@ not in MVP scope.
 | `confidence`    | real      |
 | `model_version` | text      |
 
-Exists in schema, not yet written to — reserved for persisting each computed
-prediction so the home screen doesn't recompute on every render, and so past
-predictions can be reviewed.
+Written by `recordPredictionIfChanged` (only when the window actually moves)
+and read by `AccuracyScreen`. `range_start`/`range_end` hold **calendar
+dates**, not day offsets — the anchoring to the last recorded start has
+already been applied by the time a row is written.
 
 ### Not modeled as a table
 
@@ -290,9 +297,7 @@ uses `gh`'s auth directly.
 4. **Home screen** — *built.* Anchors `predictNextCycle()`'s day-offsets to
    the most recent recorded start date and shows a calendar window +
    confidence + cycle-day range, plus history tagged by entry source.
-5. **Stretch: daily symptom log screen** — *not built.* Deliberately left
-   out; the predictor still doesn't consume `daily_symptom_log`, so it would
-   be UI over an input that changes nothing. The natural next feature.
+5. **Stretch: daily symptom log screen** — *built* in roadmap stage 3.
 6. Local persistence only — *holds.* No login, no account, no network call
    on any path.
 
@@ -348,21 +353,58 @@ builds on a known-good base.
    guard against.
 2. ~~**Engine tests**~~ — *done.* 22 tests over `stats.ts` and
    `predictor.ts` (see "Testing" below).
-3. **Symptom logging** — a screen over `daily_symptom_log`. Write-only;
-   predictor untouched.
-4. **Education content** — bundled JSON under `mobile/src/content/`, matched
-   by phenotype and tag. Every item carries a citation (constraint 7).
-5. **Prediction snapshots + accuracy** — start writing `prediction_snapshot`,
-   then show "predicted day 32–45, actual 38". This is what makes the
-   honesty claim legible, and it produces real calibration data.
-6. **Engine refinement** — consume `flow_intensity`, `end_date` and
-   symptoms. Gated on stages 2 and 5 existing to catch regressions. Phase 2
-   (pretrained model) stays gated on an aggregate dataset that doesn't exist.
-7. **Server, optional** — encrypted backup sync only. Still never required
-   for logging a cycle or seeing a prediction.
+3. ~~**Symptom logging**~~ — *done.* `SymptomLogScreen` over
+   `daily_symptom_log`: tags, mood, optional basal temperature, one entry per
+   day. The row id is derived from user + date (`sym_<user>_<date>`), so a day
+   physically cannot hold duplicates and editing is just a re-save.
+4. ~~**Education content**~~ — *done.* `mobile/src/content/education.json`,
+   five items, filtered by phenotype at read time in `content/index.ts` and
+   rendered by `LearnScreen`. Every item carries citations. They are recorded
+   as source + title + year rather than URLs, deliberately: unverified links
+   rot and invented ones are worse than none. Adding DOIs or links later is
+   fine *after* checking each one resolves.
+5. ~~**Prediction snapshots + accuracy**~~ — *done.* Home writes a snapshot
+   via `recordPredictionIfChanged`, which only inserts when the window or
+   model version actually differs from the last one — Home recomputes on
+   every focus, and a row per glance would bury the moments the forecast
+   really moved. `engine/accuracy.ts` pairs each snapshot with the first
+   cycle start recorded after it and `AccuracyScreen` shows the hit rate
+   beside the confidence that was claimed, so the two can be compared.
+6. ~~**Engine refinement**~~ — *done, and narrower than first sketched.* See
+   "What the engine deliberately does not do" below.
+7. **Server** — *not built, and still shouldn't be.* Nothing in the app makes
+   a network call; there is no feature that needs one. Untouched per the
+   standing instruction to confirm before creating anything under `server/`.
 
-Before showing this to anyone: `app.json` still carries the template's
-`name`/`slug` of `"mobile"`, and there is no README.
+### What the engine deliberately does not do
+
+Stage 6 was scoped down on purpose. The defensible refinement was **learning
+each person's own variability** instead of applying a fixed 6-day spread to
+everyone: `intrinsicVariance()` blends the observed sample variance with the
+generic prior (weighted as 4 pseudo-cycles), floored at 2 days because cycles
+are recorded to the day and claiming tighter is false precision. A scattered
+history now gets a visibly wider window than a steady one with the same
+average — which is the whole point of a PCOS-first tracker. `MODEL_VERSION` is
+`phase1-hierarchical-bayes-v2` as a result, and snapshots record it.
+
+What was **not** built, and should not be without evidence:
+
+- **Symptoms do not move the prediction.** Inferring cycle timing from acne,
+  cravings or mood would be inventing a model nobody validated, in a health
+  app, for a condition where the timing signal is genuinely hard. The symptom
+  screen says so plainly rather than implying a hidden influence.
+- **Basal temperature is recorded but not interpreted.** Reading ovulation
+  from it needs a real method and real validation, not a plausible-looking
+  heuristic.
+- `flow_intensity` and `end_date` remain descriptive. Period *duration* is a
+  reasonable future stat; it is not a cycle-timing signal.
+
+The engine gets more trustworthy by learning spread from data it already has,
+not by adding inputs whose relationship to the outcome is assumed.
+
+`app.json` now carries `name: "Cycle Engine"`, `slug: "pcos-cycle-tracker"`,
+and there is a root `README.md`. Changing `app.json` needs a dev-server
+restart before the device sees it.
 
 **`npm audit` reports 10 moderate vulnerabilities — leave them.** All ten
 trace to one root: `uuid`'s missing buffer bounds check, reached via

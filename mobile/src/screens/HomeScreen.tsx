@@ -5,9 +5,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { addDays, differenceInCalendarDays, format } from 'date-fns';
 
 import { listCycleLogs } from '../db/cycles';
+import { recordPredictionIfChanged } from '../db/predictions';
 import { getOrCreateProfile } from '../db/profile';
-import { predictNextCycle } from '../engine/predictor';
-import { fromIsoDate } from '../lib/dates';
+import { MODEL_VERSION, predictNextCycle } from '../engine/predictor';
+import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, radius, spacing } from '../theme';
 import type { CycleLog, Phenotype } from '../types';
@@ -28,7 +29,23 @@ export function HomeScreen({ navigation }: Props) {
       (async () => {
         const profile = await getOrCreateProfile();
         const cycles = await listCycleLogs(profile.id);
-        if (active) setState({ cycles, phenotype: profile.phenotype });
+        if (!active) return;
+        setState({ cycles, phenotype: profile.phenotype });
+
+        const lastCycle = cycles.length > 0 ? cycles[cycles.length - 1] : null;
+        if (lastCycle === null) return;
+
+        // Stored so the track-record screen can later check this forecast against
+        // what actually happened, rather than only ever showing the current one.
+        const prediction = predictNextCycle(cycles, profile.phenotype);
+        const anchor = fromIsoDate(lastCycle.startDate);
+        await recordPredictionIfChanged({
+          userId: profile.id,
+          rangeStart: toIsoDate(addDays(anchor, prediction.rangeStartDay)),
+          rangeEnd: toIsoDate(addDays(anchor, prediction.rangeEndDay)),
+          confidence: prediction.confidence,
+          modelVersion: MODEL_VERSION,
+        });
       })();
       return () => {
         active = false;
@@ -74,6 +91,18 @@ export function HomeScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Backfill')}
         >
           <Text style={styles.secondaryButtonText}>Add past cycles</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.linkRow}>
+        <Pressable style={styles.link} onPress={() => navigation.navigate('SymptomLog')}>
+          <Text style={styles.linkText}>Symptoms</Text>
+        </Pressable>
+        <Pressable style={styles.link} onPress={() => navigation.navigate('Accuracy')}>
+          <Text style={styles.linkText}>Track record</Text>
+        </Pressable>
+        <Pressable style={styles.link} onPress={() => navigation.navigate('Learn')}>
+          <Text style={styles.linkText}>Learn</Text>
         </Pressable>
       </View>
 
@@ -214,6 +243,18 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  link: {
+    paddingVertical: spacing.sm,
+  },
+  linkText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '600',
   },
   history: {
     backgroundColor: colors.surface,

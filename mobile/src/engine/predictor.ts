@@ -9,7 +9,7 @@ import type { CycleLog, CycleRangePrediction, Phenotype } from '../types';
  * transfer learning — Phase 2 (a pretrained-and-fine-tuned model) is gated
  * on having a real aggregate dataset, which this MVP does not have yet.
  */
-export const MODEL_VERSION = 'phase1-hierarchical-bayes-v1';
+export const MODEL_VERSION = 'phase1-hierarchical-bayes-v2';
 
 interface PhenotypePrior {
   /** Prior belief about the mean cycle length, in days. */
@@ -26,8 +26,21 @@ const PHENOTYPE_PRIORS: Record<Phenotype, PhenotypePrior> = {
   unknown: { meanDays: 30, stdDevDays: 10 },
 };
 
-/** Natural cycle-to-cycle variability — distinct from uncertainty about the mean. */
-const INTRINSIC_CYCLE_STD_DEV_DAYS = 6;
+/**
+ * Natural cycle-to-cycle variability — distinct from uncertainty about the mean.
+ * Used as the starting belief before there is enough history to measure it.
+ */
+const PRIOR_INTRINSIC_STD_DEV_DAYS = 6;
+
+/** How many observed cycles it takes to outweigh that starting belief. */
+const INTRINSIC_VARIANCE_PRIOR_WEIGHT = 4;
+
+/**
+ * Cycles are recorded to the day and even very regular ones move by a day or
+ * two, so a narrower claim than this would be false precision — which matters
+ * most for someone whose history happens to look unusually tidy so far.
+ */
+const MIN_INTRINSIC_STD_DEV_DAYS = 2;
 
 /** Backfilled dates are remembered, not logged in the moment — treat them as noisier. */
 const BACKFILL_VARIANCE_INFLATION = 3;
@@ -63,6 +76,28 @@ function cycleLengthsFromLogs(logs: CycleLog[]): Observation[] {
 }
 
 /**
+ * How much this person's cycles actually scatter, blended with the generic
+ * starting belief so a couple of similar cycles can't claim clockwork
+ * regularity. A single observation says nothing about spread, so below two it
+ * defers entirely to the prior.
+ */
+function intrinsicVariance(observations: Observation[]): number {
+  const priorVariance = PRIOR_INTRINSIC_STD_DEV_DAYS ** 2;
+  if (observations.length < 2) return priorVariance;
+
+  const lengths = observations.map((observation) => observation.cycleLengthDays);
+  const mean = lengths.reduce((total, length) => total + length, 0) / lengths.length;
+  const sampleVariance =
+    lengths.reduce((total, length) => total + (length - mean) ** 2, 0) / (lengths.length - 1);
+
+  const blended =
+    (INTRINSIC_VARIANCE_PRIOR_WEIGHT * priorVariance + lengths.length * sampleVariance) /
+    (INTRINSIC_VARIANCE_PRIOR_WEIGHT + lengths.length);
+
+  return Math.max(blended, MIN_INTRINSIC_STD_DEV_DAYS ** 2);
+}
+
+/**
  * Predicts the likely window for the next cycle as a range + confidence,
  * never a single date. Zero logs still returns a (wide) range, built from
  * the phenotype prior alone — that's the honest cold-start answer.
@@ -74,6 +109,7 @@ export function predictNextCycle(
 ): CycleRangePrediction {
   const prior = PHENOTYPE_PRIORS[phenotype ?? 'unknown'];
   const observations = cycleLengthsFromLogs(logs);
+  const cycleVariance = intrinsicVariance(observations);
 
   // Sequential normal-normal conjugate update, expressed in precision (1/variance)
   // form so each new observation just adds onto a running total.
@@ -81,7 +117,7 @@ export function predictNextCycle(
   let weightedMean = prior.meanDays * precision;
 
   for (const obs of observations) {
-    const obsVariance = INTRINSIC_CYCLE_STD_DEV_DAYS ** 2 * obs.varianceInflation;
+    const obsVariance = cycleVariance * obs.varianceInflation;
     const obsPrecision = 1 / obsVariance;
     precision += obsPrecision;
     weightedMean += obs.cycleLengthDays * obsPrecision;
@@ -92,7 +128,7 @@ export function predictNextCycle(
 
   // Predicting the next *actual* cycle length, not just the mean, so intrinsic
   // variability still applies on top of whatever we now know about the mean.
-  const predictiveStdDev = Math.sqrt(posteriorVarianceOfMean + INTRINSIC_CYCLE_STD_DEV_DAYS ** 2);
+  const predictiveStdDev = Math.sqrt(posteriorVarianceOfMean + cycleVariance);
   const z = zForCentralConfidence(confidence);
 
   return {

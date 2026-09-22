@@ -127,6 +127,36 @@ describe('backfilled cycles are trusted less than logged ones', () => {
   });
 });
 
+describe('learning how much this person actually varies', () => {
+  function atOffsets(offsets: number[]): CycleLog[] {
+    const start = new Date(Date.UTC(2026, 0, 1));
+    let dayCursor = 0;
+    return [0, ...offsets].map((gap) => {
+      dayCursor += gap;
+      const day = new Date(start.getTime() + dayCursor * 86_400_000);
+      return cycle(day.toISOString().slice(0, 10));
+    });
+  }
+
+  it('gives a scattered history a wider window than a steady one with the same average', () => {
+    const steady = predictNextCycle(atOffsets([30, 30, 30, 30, 30, 30]), 'unknown');
+    const scattered = predictNextCycle(atOffsets([18, 42, 21, 39, 24, 36]), 'unknown');
+
+    expect(steady.meanCycleLength).toBeCloseTo(scattered.meanCycleLength, 0);
+    expect(scattered.stdDevCycleLength).toBeGreaterThan(steady.stdDevCycleLength * 1.5);
+  });
+
+  it('refuses to claim more precision than whole-day tracking supports', () => {
+    const flawless = predictNextCycle(atOffsets([28, 28, 28, 28, 28, 28, 28, 28, 28, 28]), 'regular');
+    expect(flawless.stdDevCycleLength).toBeGreaterThanOrEqual(2);
+  });
+
+  it('ignores spread until there are at least two gaps to measure it from', () => {
+    const single = predictNextCycle([cycle('2026-01-01'), cycle('2026-01-31')], 'regular');
+    expect(single.meanCycleLength).toBeCloseTo(28.2, 4);
+  });
+});
+
 describe('messy input', () => {
   it('does not care what order the logs arrive in', () => {
     const ordered = [cycle('2026-01-01'), cycle('2026-02-01'), cycle('2026-03-05')];

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "regular-cycle-range",
+    "title": "What counts as a regular cycle",
+    "tags": ["basics", "cycle-length"],
+    "phenotypeRelevance": ["regular", "mildly_irregular", "diagnosed_pcos", "unknown"],
+    "body": "A cycle is counted from the first day of one period to the first day of the next — not from the day a period ends. For most adults that runs somewhere between 24 and 38 days, and there is no single number that everyone should match.\n\nCycles that shift by a few days from one month to the next are still considered regular. What clinicians tend to look at is the spread: the gap between your shortest and longest cycle over a year. A spread wider than about 7 to 9 days is usually described as irregular.\n\nThis matters for tracking because a single 'average' hides that spread entirely. Two people can both average 30 days while one ranges 29–31 and the other ranges 22–45.",
+    "citations": [
+      "FIGO Menstrual Disorders Committee — Munro MG et al., The two FIGO systems for normal and abnormal uterine bleeding (2018)",
+      "American College of Obstetricians and Gynecologists, Committee Opinion 651: Menstruation in Girls and Adolescents — Using the Menstrual Cycle as a Vital Sign (2015)"
+    ]
+  },
+  {
+    "id": "pcos-cycle-length",
+    "title": "How PCOS tends to affect cycle length",
+    "tags": ["pcos", "cycle-length"],
+    "phenotypeRelevance": ["mildly_irregular", "diagnosed_pcos", "unknown"],
+    "body": "PCOS commonly shows up as infrequent or hard-to-predict periods, because ovulation happens less regularly. The 2023 international guideline describes irregular cycles in adults as cycles shorter than 21 days, longer than 35 days, or fewer than eight cycles in a year.\n\nIrregular cycles on their own do not confirm PCOS. Diagnosis involves other criteria and a clinician's assessment, and plenty of people have irregular cycles for entirely different reasons — thyroid conditions, stress, weight change, perimenopause, and medication among them.\n\nWhat tracking can do is give you an accurate record of your own pattern, which is far more useful in an appointment than trying to remember.",
+    "citations": [
+      "Teede HJ et al., International Evidence-Based Guideline for the Assessment and Management of Polycystic Ovary Syndrome (2023)",
+      "World Health Organization, Polycystic ovary syndrome fact sheet (2023)"
+    ]
+  },
+  {
+    "id": "why-a-range",
+    "title": "Why this app shows a range instead of a date",
+    "tags": ["basics", "predictions"],
+    "phenotypeRelevance": ["regular", "mildly_irregular", "diagnosed_pcos", "unknown"],
+    "body": "A single predicted date implies a precision that cycle data does not support. Even in large datasets of hundreds of thousands of cycles, the same person's cycles vary from one to the next, and that variation is normal rather than a sign something is wrong.\n\nSo this app predicts a window and tells you how confident it is. Early on, when it has little of your history, the window is wide — that is the honest answer, not a failure. As you log more cycles, the window narrows.\n\nA cycle you enter from memory counts too, but it counts for less than one you logged as it happened, because remembered dates drift.",
+    "citations": [
+      "Bull JR et al., Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles, npj Digital Medicine (2019)",
+      "FIGO Menstrual Disorders Committee — Munro MG et al., The two FIGO systems for normal and abnormal uterine bleeding (2018)"
+    ]
+  },
+  {
+    "id": "when-to-see-a-clinician",
+    "title": "When it's worth talking to a clinician",
+    "tags": ["safety", "care"],
+    "phenotypeRelevance": ["regular", "mildly_irregular", "diagnosed_pcos", "unknown"],
+    "body": "This app tracks patterns. It cannot tell you whether something is wrong, and it is worth getting checked rather than waiting for an app to reassure you.\n\nCommonly cited reasons to book an appointment include: no period for three months or more when you are not pregnant; bleeding heavy enough to soak through a pad or tampon every hour for several hours in a row; periods lasting longer than about seven days; bleeding between periods or after sex; or pain that stops you doing ordinary things.\n\nNone of these mean something is definitely wrong. They mean it is reasonable to ask.",
+    "citations": [
+      "American College of Obstetricians and Gynecologists, Heavy Menstrual Bleeding (FAQ, 2024)",
+      "National Institute for Health and Care Excellence (NICE), Clinical Knowledge Summary: Amenorrhoea (2023)"
+    ]
+  },
+  {
+    "id": "useful-at-an-appointment",
+    "title": "Making your tracking useful at an appointment",
+    "tags": ["care", "practical"],
+    "phenotypeRelevance": ["mildly_irregular", "diagnosed_pcos", "unknown"],
+    "body": "Guidelines recommend that assessment starts with an accurate cycle history, which is exactly the thing that is hard to reconstruct from memory in a ten-minute appointment.\n\nWorth bringing: the start dates of your recent cycles, your shortest and longest cycle over the past year, how many periods you had in the last twelve months, and any symptoms you have noticed alongside them.\n\nThe history screen in this app gives you the first three directly, and marks which dates you entered from memory — a distinction a clinician will care about.",
+    "citations": [
+      "Teede HJ et al., International Evidence-Based Guideline for the Assessment and Management of Polycystic Ovary Syndrome (2023)",
+      "American College of Obstetricians and Gynecologists, Committee Opinion 651: Menstruation in Girls and Adolescents — Using the Menstrual Cycle as a Vital Sign (2015)"
+    ]
+  }
+]

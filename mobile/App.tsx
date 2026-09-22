@@ -7,8 +7,11 @@ import { StatusBar } from 'expo-status-bar';
 
 import { getOrCreateProfile } from './src/db/profile';
 import type { RootStackParamList } from './src/navigation/types';
+import { AccuracyScreen } from './src/screens/AccuracyScreen';
 import { BackfillScreen } from './src/screens/BackfillScreen';
 import { CycleDetailScreen } from './src/screens/CycleDetailScreen';
+import { LearnScreen } from './src/screens/LearnScreen';
+import { SymptomLogScreen } from './src/screens/SymptomLogScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LogCycleScreen } from './src/screens/LogCycleScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -67,6 +70,17 @@ export default function App() {
             name="CycleDetail"
             component={CycleDetailScreen}
             options={{ title: 'Edit cycle' }}
+          />
+          <Stack.Screen
+            name="SymptomLog"
+            component={SymptomLogScreen}
+            options={{ title: 'Symptoms' }}
+          />
+          <Stack.Screen name="Learn" component={LearnScreen} options={{ title: 'Learn' }} />
+          <Stack.Screen
+            name="Accuracy"
+            component={AccuracyScreen}
+            options={{ title: 'Track record' }}
           />
         </Stack.Navigator>
       </NavigationContainer>
