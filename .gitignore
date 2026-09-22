@@ -1,0 +1,10 @@
+# mobile/.gitignore covers the Expo app's own artifacts; this covers the root
+# and anything added alongside it later.
+
+.DS_Store
+node_modules/
+*.log
+
+# local env files
+.env
+.env*.local
