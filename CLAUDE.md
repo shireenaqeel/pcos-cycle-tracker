@@ -278,13 +278,13 @@ empty state inviting a log or backfill instead of a fabricated window.
 
 - ~~GitHub target account username~~ — decided: `shireenaqeel`. Still
   blocked on that account being authenticated via `gh auth login`.
-- Repo name.
-- **Where the git repo root goes.** `create-expo-app` already ran `git init`
-  inside `mobile/` — it has a `main` branch, staged template files, and *no
-  commits*. The project root is not a repo. Before the first commit, decide
-  whether to promote the root to the repo (and drop `mobile/.git`) or keep
-  the repo scoped to `mobile/`. The brief's mention of a root `.gitignore`
-  assumes the former.
+- ~~Repo name~~ — decided: `pcos-cycle-tracker`.
+- ~~Where the git repo root goes~~ — decided: the **project root** is the
+  repo, initialized on branch `main` with a root `.gitignore`. The Expo
+  template's `mobile/.git` (no commits, nothing to lose) was removed. Commits
+  are authored as `shireenaqeel <shireenaqeel@users.noreply.github.com>`, set
+  **repo-locally** — this machine still has no global git identity, on
+  purpose, so other projects are unaffected.
 - Whether `server/` gets built at all for v1 — current recommendation is
   still to defer it entirely; nothing in the MVP, as built, needs it.
 
