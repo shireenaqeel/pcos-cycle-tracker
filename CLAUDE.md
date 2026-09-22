@@ -220,24 +220,36 @@ attempt this for the basic version; there's nothing to pretrain on yet.
   (inactive). Before any `gh` or push operation, confirm the active account
   is `shireenaqeel` — `gh auth switch` changes it, and a wrong-account push
   is the easy mistake here.
-- **A plain `git push` fails with `denied to psai11` (403).** The system
-  gitconfig shipped with Xcode Command Line Tools sets `osxkeychain` as the
-  credential helper, and that keychain entry holds `psai11`'s token — it
-  answers first no matter which account `gh` has active. `gh repo create
-  --push` works (it uses `gh`'s own auth); `git push` does not. Until the
-  keychain entry is replaced, push with the helper chain reset:
+### Credential isolation from `psai11` — deliberate, don't undo
 
-  ```sh
-  git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin main
-  ```
+`psai11` is **a different person's account**, which also happens to be
+authenticated in `gh` on this machine. Nothing in this repo may ever push as
+them. Two repo-local settings enforce that, both scoped to this repo — no
+global or system git config is set (this machine has no global gitconfig at
+all, by design):
 
-  Making this permanent is a one-line repo-local config, deliberately not
-  set yet so nothing on this machine changes for `psai11`:
+1. The credential helper chain is reset for `github.com` and replaced with
+   `gh`'s own, so the system `osxkeychain` helper — which holds `psai11`'s
+   token and otherwise answers first — is bypassed:
 
-  ```sh
-  git config --local --replace-all credential.https://github.com.helper ""
-  git config --local --add credential.https://github.com.helper '!gh auth git-credential'
-  ```
+   ```sh
+   git config --local --replace-all credential.https://github.com.helper ""
+   git config --local --add credential.https://github.com.helper '!gh auth git-credential'
+   ```
+
+2. `origin` pins the username: `https://shireenaqeel@github.com/...`, so
+   every credential request is scoped to that account.
+
+`gh auth git-credential` serves **only** the account `gh` is currently
+authenticated as, and returns nothing for any other username (verified). So
+if `gh auth switch` ever makes `psai11` active, a push from this repo fails
+outright rather than landing under the wrong name. That fail-closed behavior
+is the point — if a push suddenly 403s, check `gh auth status` before
+changing any of the above.
+
+Historical note: before this was set, a plain `git push` failed with
+`denied to psai11` while `gh repo create --push` worked, because the latter
+uses `gh`'s auth directly.
 - `git push` should work directly from a Claude Code session on this
   project once the remote exists — don't route around that or ask the user
   to push manually as a matter of course.
