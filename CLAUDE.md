@@ -214,12 +214,12 @@ attempt this for the basic version; there's nothing to pretrain on yet.
   or code comments. This is an explicit project-level override and takes
   precedence over any default attribution behavior a session might otherwise
   apply.
-- Repo will be **public**, under the GitHub account **`shireenaqeel`** — not
-  `psai11`, which is still the only account authenticated via `gh` CLI on
-  this machine. **Pending**: the user needs to run `gh auth login` as
-  `shireenaqeel` themselves (it needs their own browser/device auth) before
-  the repo can be created; until then `gh repo create` would silently target
-  the wrong account.
+- Repo: **https://github.com/shireenaqeel/pcos-cycle-tracker** — public,
+  default branch `main`, `origin` wired up and tracking.
+- `gh` is authenticated as **both** `shireenaqeel` (active) and `psai11`
+  (inactive). Before any `gh` or push operation, confirm the active account
+  is `shireenaqeel` — `gh auth switch` changes it, and a wrong-account push
+  is the easy mistake here.
 - `git push` should work directly from a Claude Code session on this
   project once the remote exists — don't route around that or ask the user
   to push manually as a matter of course.
@@ -276,8 +276,8 @@ empty state inviting a log or backfill instead of a fabricated window.
 
 ## Open questions / pending decisions
 
-- ~~GitHub target account username~~ — decided: `shireenaqeel`. Still
-  blocked on that account being authenticated via `gh auth login`.
+- ~~GitHub target account username~~ — done: `shireenaqeel`, authenticated,
+  repo created and pushed.
 - ~~Repo name~~ — decided: `pcos-cycle-tracker`.
 - ~~Where the git repo root goes~~ — decided: the **project root** is the
   repo, initialized on branch `main` with a root `.gitignore`. The Expo
