@@ -304,6 +304,37 @@ zero cycles recorded there is no anchor, and anchoring to "today" would imply
 the app knows where in a cycle someone is — it doesn't. That case shows an
 empty state inviting a log or backfill instead of a fabricated window.
 
+## Roadmap — staged
+
+Ordered so each stage makes the next one safer. Confirmed working on a real
+device via Expo Go before this roadmap was written, so everything below
+builds on a known-good base.
+
+1. **Correctable data** — edit and delete a cycle; set an end date after the
+   fact. *Today a mistyped backfill date is permanent and silently skews the
+   posterior forever.* `entry_source` stays immutable through an edit:
+   correcting a remembered date does not make it a real-time log.
+2. **Engine tests** — `stats.ts` and `predictor.ts` have none. Pin the
+   behavior that matters: prior-only cold start, backfill inflation actually
+   widening the interval, posterior converging toward observed lengths,
+   out-of-order and duplicate dates. Untested Bayesian math is dangerous
+   precisely because wrong answers still look plausible.
+3. **Symptom logging** — a screen over `daily_symptom_log`. Write-only;
+   predictor untouched.
+4. **Education content** — bundled JSON under `mobile/src/content/`, matched
+   by phenotype and tag. Every item carries a citation (constraint 7).
+5. **Prediction snapshots + accuracy** — start writing `prediction_snapshot`,
+   then show "predicted day 32–45, actual 38". This is what makes the
+   honesty claim legible, and it produces real calibration data.
+6. **Engine refinement** — consume `flow_intensity`, `end_date` and
+   symptoms. Gated on stages 2 and 5 existing to catch regressions. Phase 2
+   (pretrained model) stays gated on an aggregate dataset that doesn't exist.
+7. **Server, optional** — encrypted backup sync only. Still never required
+   for logging a cycle or seeing a prediction.
+
+Before showing this to anyone: `app.json` still carries the template's
+`name`/`slug` of `"mobile"`, and there is no README.
+
 ## Open questions / pending decisions
 
 - ~~GitHub target account username~~ — done: `shireenaqeel`, authenticated,
