@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { DateGrid } from '../components/DateGrid';
 import { LOCAL_USER_ID } from '../db/profile';
 import { deleteSymptomLog, getSymptomLogForDate, saveSymptomLog } from '../db/symptoms';
-import { toIsoDate } from '../lib/dates';
+import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, radius, spacing } from '../theme';
 import type { SymptomTag } from '../types';
@@ -33,8 +33,11 @@ const SYMPTOM_OPTIONS: { value: SymptomTag; label: string }[] = [
 
 const MOOD_OPTIONS = ['good', 'even', 'low', 'irritable', 'anxious'];
 
-export function SymptomLogScreen({ navigation }: Props) {
-  const [date, setDate] = useState(() => new Date());
+export function SymptomLogScreen({ navigation, route }: Props) {
+  const requestedDate = route.params?.date;
+  const [date, setDate] = useState(() =>
+    requestedDate === undefined ? new Date() : fromIsoDate(requestedDate)
+  );
   const [tags, setTags] = useState<SymptomTag[]>([]);
   const [mood, setMood] = useState<string | null>(null);
   const [basalTemp, setBasalTemp] = useState('');
@@ -88,6 +91,10 @@ export function SymptomLogScreen({ navigation }: Props) {
         Symptoms are yours to look back on. They don't move the prediction — the app won't pretend
         a symptom tells it something it can't actually prove.
       </Text>
+
+      <Pressable style={styles.historyLink} onPress={() => navigation.navigate('SymptomHistory')}>
+        <Text style={styles.historyLinkText}>See past entries</Text>
+      </Pressable>
 
       <Text style={styles.sectionLabel}>Day</Text>
       <DateGrid value={date} onChange={setDate} maxDate={new Date()} />
@@ -229,5 +236,13 @@ const styles = StyleSheet.create({
   clearButtonText: {
     color: colors.accent,
     fontSize: 15,
+  },
+  historyLink: {
+    alignSelf: 'flex-start',
+  },
+  historyLinkText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -98,6 +98,9 @@ export function HomeScreen({ navigation }: Props) {
         <Pressable style={styles.link} onPress={() => navigation.navigate('SymptomLog')}>
           <Text style={styles.linkText}>Symptoms</Text>
         </Pressable>
+        <Pressable style={styles.link} onPress={() => navigation.navigate('Insights')}>
+          <Text style={styles.linkText}>Your numbers</Text>
+        </Pressable>
         <Pressable style={styles.link} onPress={() => navigation.navigate('Accuracy')}>
           <Text style={styles.linkText}>Track record</Text>
         </Pressable>
@@ -245,8 +248,10 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   linkRow: {
+    columnGap: spacing.lg,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   link: {
     paddingVertical: spacing.sm,

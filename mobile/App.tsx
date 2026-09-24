@@ -10,7 +10,9 @@ import type { RootStackParamList } from './src/navigation/types';
 import { AccuracyScreen } from './src/screens/AccuracyScreen';
 import { BackfillScreen } from './src/screens/BackfillScreen';
 import { CycleDetailScreen } from './src/screens/CycleDetailScreen';
+import { InsightsScreen } from './src/screens/InsightsScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
+import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
 import { SymptomLogScreen } from './src/screens/SymptomLogScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LogCycleScreen } from './src/screens/LogCycleScreen';
@@ -75,6 +77,16 @@ export default function App() {
             name="SymptomLog"
             component={SymptomLogScreen}
             options={{ title: 'Symptoms' }}
+          />
+          <Stack.Screen
+            name="SymptomHistory"
+            component={SymptomHistoryScreen}
+            options={{ title: 'Symptom history' }}
+          />
+          <Stack.Screen
+            name="Insights"
+            component={InsightsScreen}
+            options={{ title: 'Your numbers' }}
           />
           <Stack.Screen name="Learn" component={LearnScreen} options={{ title: 'Learn' }} />
           <Stack.Screen

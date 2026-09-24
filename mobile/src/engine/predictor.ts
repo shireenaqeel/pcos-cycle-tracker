@@ -1,3 +1,4 @@
+import { cycleGaps } from './gaps';
 import { zForCentralConfidence } from './stats';
 import type { CycleLog, CycleRangePrediction, Phenotype } from '../types';
 
@@ -54,25 +55,10 @@ interface Observation {
 }
 
 function cycleLengthsFromLogs(logs: CycleLog[]): Observation[] {
-  const sorted = [...logs].sort((a, b) => a.startDate.localeCompare(b.startDate));
-  const observations: Observation[] = [];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const prevMs = new Date(sorted[i - 1].startDate).getTime();
-    const currMs = new Date(sorted[i].startDate).getTime();
-    const days = Math.round((currMs - prevMs) / (1000 * 60 * 60 * 24));
-    if (days <= 0) continue; // guards against duplicate or out-of-order entries
-
-    const eitherEndBackfilled =
-      sorted[i].entrySource === 'backfilled' || sorted[i - 1].entrySource === 'backfilled';
-
-    observations.push({
-      cycleLengthDays: days,
-      varianceInflation: eitherEndBackfilled ? BACKFILL_VARIANCE_INFLATION : 1,
-    });
-  }
-
-  return observations;
+  return cycleGaps(logs).map((gap) => ({
+    cycleLengthDays: gap.cycleLengthDays,
+    varianceInflation: gap.fromBackfilled ? BACKFILL_VARIANCE_INFLATION : 1,
+  }));
 }
 
 /**

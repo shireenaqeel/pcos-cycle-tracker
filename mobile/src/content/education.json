@@ -48,7 +48,7 @@
     "title": "Making your tracking useful at an appointment",
     "tags": ["care", "practical"],
     "phenotypeRelevance": ["mildly_irregular", "diagnosed_pcos", "unknown"],
-    "body": "Guidelines recommend that assessment starts with an accurate cycle history, which is exactly the thing that is hard to reconstruct from memory in a ten-minute appointment.\n\nWorth bringing: the start dates of your recent cycles, your shortest and longest cycle over the past year, how many periods you had in the last twelve months, and any symptoms you have noticed alongside them.\n\nThe history screen in this app gives you the first three directly, and marks which dates you entered from memory — a distinction a clinician will care about.",
+    "body": "Guidelines recommend that assessment starts with an accurate cycle history, which is exactly the thing that is hard to reconstruct from memory in a ten-minute appointment.\n\nWorth bringing: the start dates of your recent cycles, your shortest and longest cycle, how many periods you had in the last twelve months, and any symptoms you noticed alongside them.\n\nThe 'Your numbers' screen gives you all of those in one place, including how many of your dates were entered from memory rather than logged at the time — a distinction a clinician will care about.",
     "citations": [
       "Teede HJ et al., International Evidence-Based Guideline for the Assessment and Management of Polycystic Ovary Syndrome (2023)",
       "American College of Obstetricians and Gynecologists, Committee Opinion 651: Menstruation in Girls and Adolescents — Using the Menstrual Cycle as a Vital Sign (2015)"

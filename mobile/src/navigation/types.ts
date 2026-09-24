@@ -4,7 +4,9 @@ export type RootStackParamList = {
   Backfill: undefined;
   LogCycle: undefined;
   CycleDetail: { cycleId: string };
-  SymptomLog: undefined;
+  SymptomLog: { date?: string } | undefined;
+  SymptomHistory: undefined;
   Learn: undefined;
   Accuracy: undefined;
+  Insights: undefined;
 };

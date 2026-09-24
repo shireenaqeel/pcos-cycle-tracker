@@ -35,12 +35,20 @@ Already built and working — do not redo this, extend it:
   gated on an initial `getOrCreateProfile()` load.
 - `mobile/src/navigation/types.ts` — `RootStackParamList` for typed routes.
 - `mobile/src/screens/` — `OnboardingScreen`, `HomeScreen`, `BackfillScreen`,
-  `LogCycleScreen`, `CycleDetailScreen`, `SymptomLogScreen`, `LearnScreen`,
-  `AccuracyScreen`.
+  `LogCycleScreen`, `CycleDetailScreen`, `SymptomLogScreen`,
+  `SymptomHistoryScreen`, `InsightsScreen`, `LearnScreen`, `AccuracyScreen`.
 - `mobile/src/db/symptoms.ts`, `predictions.ts` — access for
   `daily_symptom_log` and `prediction_snapshot`.
 - `mobile/src/engine/accuracy.ts` — scores stored predictions against what
   actually happened.
+- `mobile/src/engine/gaps.ts` — the one implementation of "days between
+  consecutive start dates". Both the predictor and the stats screen use it;
+  do not reimplement it, because the identical-parse property that makes it
+  timezone- and DST-proof is easy to lose.
+- `mobile/src/engine/insights.ts` — descriptive cycle statistics
+  (shortest/longest/average/median, spread, periods in the last year,
+  typical period length from `end_date`). Purely counted from recorded data,
+  no inference.
 - `mobile/src/content/` — bundled education JSON and phenotype filtering.
 - `mobile/src/components/DateGrid.tsx` — dependency-free month calendar
   built on `date-fns`; used for every date entry. No date-picker library is
@@ -411,6 +419,28 @@ trace to one root: `uuid`'s missing buffer bounds check, reached via
 `xcode` → `@expo/config-plugins` → the rest of Expo's toolchain. That is
 build tooling, not code that ships to the device, and `npm audit fix --force`
 would break the SDK 57 pin. It clears when Expo bumps the dependency.
+
+## Keep the app and the education content honest about each other
+
+The "Making your tracking useful at an appointment" article used to promise
+that the history screen showed your shortest and longest cycle and a
+twelve-month count. It didn't — the history was a list of dates. Content that
+describes a feature is a claim the app has to keep, and it drifted within a
+single session.
+
+`InsightsScreen` now provides exactly what that article points at. If either
+side changes, change the other in the same commit.
+
+## Still unbuilt, roughly by value
+
+- **Local notifications** ("your window opens in two days"). A tracker you
+  have to remember to open loses. `expo-notifications`, device-only.
+- **Export** — no way to get data off the device, so a lost phone is a lost
+  history, and there's no artifact to hand a clinician.
+- **A standalone build (EAS)** — the app currently runs only while a dev
+  server serves it, which blocks real day-to-day use.
+- Changing phenotype after onboarding (no settings screen at all), default
+  Expo icons, and no accessibility labels or dynamic-type handling.
 
 ## Open questions / pending decisions
 
