@@ -634,3 +634,41 @@ Soft and organic, chosen deliberately over the default look:
   their day.
 - Section labels are sentence case. A wall of tiny uppercase headings is the
   most generic thing a screen can do.
+
+## Themes
+
+Four palettes — blush, meadow, dusk, clay — each with a light and dark
+variant, chosen in Settings and remembered on the profile row (schema v3).
+
+`ThemeProvider` in `theme.tsx` holds the choice for the tree; `useThemeColors`
+reads it alongside the system light/dark setting, so every screen already
+built picks up a theme change with no edit. The choice is mirrored in state as
+well as written to SQLite, so tapping a theme repaints immediately instead of
+after a round trip.
+
+There is **no in-app light/dark toggle** and shouldn't be — the OS owns that.
+Themes pick the colours used *within* whichever mode the phone is in.
+
+`App.tsx` loads the profile once and passes it to `AppShell`, because the
+provider needs the saved theme before the first frame paints. Rendering first
+and correcting later would flash the wrong palette.
+
+## The check-in is a flow, not a form
+
+`CheckInScreen` asks one thing at a time across eight steps — mood, stress,
+sleep, water, movement, body, notes, then a summary — with a progress bar, a
+cross-fade between steps, and a gradient and blobs behind it. A single scroll
+of identical cards was the thing that read as generated, and it made a
+seven-part log feel like admin.
+
+Controls are built to suit what they measure (`components/CheckInControls.tsx`):
+
+- **Water**: glasses that animate their fill as you tap. Tapping the glass
+  that's already the last full one empties back to it, so correcting is a tap.
+- **Sleep**: a row of bars rising with the hours, which reads as an amount at
+  a glance in a way a counter never does, plus a half-hour toggle.
+- **Stress**: a blob that swells and warms from sage through apricot to petal
+  as the level rises, with the number kept alongside so it stays legible.
+
+Every step is skippable and the summary states what was captured. Nothing here
+feeds the prediction, and the last step says so.

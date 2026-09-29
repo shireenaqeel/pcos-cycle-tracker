@@ -1,3 +1,5 @@
+export type ThemeName = 'blush' | 'meadow' | 'dusk' | 'clay';
+
 export type Phenotype = 'regular' | 'mildly_irregular' | 'diagnosed_pcos' | 'unknown';
 
 export interface UserProfile {
@@ -6,6 +8,8 @@ export interface UserProfile {
   selfReportedDx: boolean;
   createdAt: string;
   displayName: string | null;
+  /** Null until they pick one; the provider falls back to the default. */
+  theme: ThemeName | null;
 }
 
 export type EntrySource = 'logged' | 'backfilled';

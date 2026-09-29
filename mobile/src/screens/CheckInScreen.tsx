@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { format, isToday } from 'date-fns';
 
-import { Chip, ScaleDots, SectionLabel, SoftCard, Squish, Stepper } from '../components/Soft';
+import { SleepBars, StressBlob, WaterGlasses } from '../components/CheckInControls';
+import { Blob, Chip, Squish } from '../components/Soft';
 import { LOCAL_USER_ID } from '../db/profile';
 import { deleteSymptomLog, getSymptomLogForDate, saveSymptomLog } from '../db/symptoms';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
-import { successFeedback, warningFeedback } from '../lib/feedback';
+import { successFeedback, tapFeedback, warningFeedback } from '../lib/feedback';
 import type { RootStackParamList } from '../navigation/types';
 import {
   radius,
@@ -20,6 +22,10 @@ import {
 import type { MovementLevel, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CheckIn'>;
+
+type StepName = 'mood' | 'stress' | 'sleep' | 'water' | 'movement' | 'body' | 'notes' | 'done';
+
+const STEPS: StepName[] = ['mood', 'stress', 'sleep', 'water', 'movement', 'body', 'notes', 'done'];
 
 const MOOD_OPTIONS = ['good', 'even', 'low', 'irritable', 'anxious'];
 
@@ -41,6 +47,17 @@ const SYMPTOM_OPTIONS: { value: SymptomTag; label: string }[] = [
   { value: 'ovulation_pain', label: 'Ovulation pain' },
 ];
 
+const PROMPTS: Record<StepName, { title: string; sub: string }> = {
+  mood: { title: 'How are you feeling?', sub: 'However you land is fine.' },
+  stress: { title: 'How loud is today?', sub: 'One is calm, five is overwhelmed.' },
+  sleep: { title: 'How did you sleep?', sub: 'Tap roughly how many hours you got.' },
+  water: { title: 'Had much water?', sub: 'Tap a glass to fill it.' },
+  movement: { title: 'Did you move?', sub: 'Resting counts as an answer.' },
+  body: { title: 'How does your body feel?', sub: 'Tap anything you noticed. Skip what you did not.' },
+  notes: { title: 'Anything worth remembering?', sub: 'Food, or whatever else shaped the day.' },
+  done: { title: 'That is the lot.', sub: 'Here is what you logged.' },
+};
+
 export function CheckInScreen({ navigation, route }: Props) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
@@ -51,6 +68,7 @@ export function CheckInScreen({ navigation, route }: Props) {
   );
   const isoDate = toIsoDate(date);
 
+  const [stepIndex, setStepIndex] = useState(0);
   const [mood, setMood] = useState<string | null>(null);
   const [stress, setStress] = useState<number | null>(null);
   const [hydration, setHydration] = useState(0);
@@ -61,6 +79,10 @@ export function CheckInScreen({ navigation, route }: Props) {
   const [otherNote, setOtherNote] = useState('');
   const [existingEntry, setExistingEntry] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const step = STEPS[stepIndex];
+  const fade = useRef(new Animated.Value(1)).current;
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let active = true;
@@ -80,6 +102,23 @@ export function CheckInScreen({ navigation, route }: Props) {
       active = false;
     };
   }, [isoDate]);
+
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: (stepIndex + 1) / STEPS.length,
+      duration: 280,
+      useNativeDriver: false,
+    }).start();
+  }, [stepIndex, progress]);
+
+  /** Cross-fades the panel so moving between questions doesn't feel like a page reload. */
+  function goTo(nextIndex: number) {
+    tapFeedback();
+    Animated.timing(fade, { toValue: 0, duration: 110, useNativeDriver: true }).start(() => {
+      setStepIndex(nextIndex);
+      Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+    });
+  }
 
   function toggleTag(tag: SymptomTag) {
     setTags((current) =>
@@ -113,189 +152,307 @@ export function CheckInScreen({ navigation, route }: Props) {
     navigation.goBack();
   }
 
+  const summary = [
+    mood === null ? null : `feeling ${mood}`,
+    stress === null ? null : `stress ${stress} of 5`,
+    sleep === 0 ? null : `${sleep} hours of sleep`,
+    hydration === 0 ? null : `${hydration} glasses of water`,
+    movement === null ? null : MOVEMENT_OPTIONS.find((o) => o.value === movement)?.label.toLowerCase(),
+    tags.length === 0 ? null : `${tags.length} thing${tags.length === 1 ? '' : 's'} noticed`,
+  ].filter((line): line is string => line !== null);
+
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.heading}>
-        {isToday(date) ? 'How was today?' : `How was ${format(date, 'EEEE, d MMM')}?`}
-      </Text>
-      <Text style={styles.intro}>
-        Everything here is optional. One tap is a perfectly good entry.
-      </Text>
+    <LinearGradient
+      colors={[colors.gradientFrom, colors.background]}
+      style={styles.screen}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.9, y: 0.7 }}
+    >
+      <Blob color={colors.petal} size={260} style={styles.blobOne} />
+      <Blob color={colors.lilac} size={200} style={styles.blobTwo} />
 
-      <SoftCard tint={colors.petal}>
-        <SectionLabel>Mood</SectionLabel>
-        <View style={styles.wrap}>
-          {MOOD_OPTIONS.map((option) => (
-            <Chip
-              key={option}
-              label={option}
-              selected={mood === option}
-              tint={colors.surface}
-              onPress={() => setMood(mood === option ? null : option)}
-            />
-          ))}
-        </View>
-      </SoftCard>
-
-      <SoftCard tint={colors.lilac}>
-        <SectionLabel>Stress</SectionLabel>
-        <ScaleDots value={stress} onChange={setStress} lowLabel="calm" highLabel="overwhelmed" />
-      </SoftCard>
-
-      <View style={styles.pair}>
-        <SoftCard tint={colors.sage} style={styles.pairItem}>
-          <SectionLabel>Water</SectionLabel>
-          <Stepper value={hydration} onChange={setHydration} suffix="glasses" max={20} />
-        </SoftCard>
+      <View style={styles.progressTrack}>
+        <Animated.View
+          style={[
+            styles.progressFill,
+            { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+          ]}
+        />
       </View>
 
-      <SoftCard tint={colors.apricot}>
-        <SectionLabel>Sleep</SectionLabel>
-        <Stepper
-          value={sleep}
-          onChange={setSleep}
-          suffix="hours"
-          step={0.5}
-          max={16}
-          format={(value) => (value === 0 ? '–' : String(value))}
-        />
-      </SoftCard>
+      <Text style={styles.dayLabel}>
+        {isToday(date) ? 'Today' : format(date, 'EEEE, d MMMM')} · {stepIndex + 1} of {STEPS.length}
+      </Text>
 
-      <SoftCard>
-        <SectionLabel>Movement</SectionLabel>
-        <View style={styles.wrap}>
-          {MOVEMENT_OPTIONS.map((option) => (
-            <Chip
-              key={option.value}
-              label={option.label}
-              selected={movement === option.value}
-              onPress={() => setMovement(movement === option.value ? null : option.value)}
-            />
-          ))}
-        </View>
-      </SoftCard>
+      <Animated.View style={[styles.panel, { opacity: fade }]}>
+        <Text style={styles.title}>{PROMPTS[step].title}</Text>
+        <Text style={styles.sub}>{PROMPTS[step].sub}</Text>
 
-      <SoftCard>
-        <SectionLabel>Anything you noticed</SectionLabel>
-        <View style={styles.wrap}>
-          {SYMPTOM_OPTIONS.map((option) => (
-            <Chip
-              key={option.value}
-              label={option.label}
-              selected={tags.includes(option.value)}
-              onPress={() => toggleTag(option.value)}
-            />
-          ))}
-        </View>
-      </SoftCard>
+        <ScrollView
+          contentContainerStyle={styles.stepBody}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {step === 'mood' && (
+            <View style={styles.wrap}>
+              {MOOD_OPTIONS.map((option) => (
+                <Chip
+                  key={option}
+                  label={option}
+                  selected={mood === option}
+                  onPress={() => setMood(mood === option ? null : option)}
+                />
+              ))}
+            </View>
+          )}
 
-      <SoftCard>
-        <SectionLabel>Food</SectionLabel>
-        <TextInput
-          style={styles.input}
-          value={foodNote}
-          onChangeText={setFoodNote}
-          placeholder="What you ate, how it sat with you"
-          placeholderTextColor={colors.textFaint}
-          multiline
-        />
-      </SoftCard>
+          {step === 'stress' && <StressBlob level={stress} onChange={setStress} />}
 
-      <SoftCard>
-        <SectionLabel>Anything else going on</SectionLabel>
-        <TextInput
-          style={styles.input}
-          value={otherNote}
-          onChangeText={setOtherNote}
-          placeholder="Travel, illness, medication, a hard week"
-          placeholderTextColor={colors.textFaint}
-          multiline
-        />
-      </SoftCard>
+          {step === 'sleep' && <SleepBars hours={sleep} onChange={setSleep} />}
 
-      <Squish onPress={save} disabled={busy} haptic={false}>
-        <View style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save {format(date, 'd MMM')}</Text>
-        </View>
-      </Squish>
+          {step === 'water' && (
+            <View style={styles.waterBlock}>
+              <WaterGlasses count={hydration} onChange={setHydration} />
+              <Text style={styles.waterCount}>
+                {hydration === 0 ? 'none yet' : `${hydration} glass${hydration === 1 ? '' : 'es'}`}
+              </Text>
+            </View>
+          )}
 
-      {existingEntry && (
-        <Squish onPress={clearDay} disabled={busy} haptic={false}>
-          <View style={styles.clearButton}>
-            <Text style={styles.clearButtonText}>Clear this day</Text>
+          {step === 'movement' && (
+            <View style={styles.wrap}>
+              {MOVEMENT_OPTIONS.map((option) => (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  selected={movement === option.value}
+                  onPress={() => setMovement(movement === option.value ? null : option.value)}
+                />
+              ))}
+            </View>
+          )}
+
+          {step === 'body' && (
+            <View style={styles.wrap}>
+              {SYMPTOM_OPTIONS.map((option) => (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  selected={tags.includes(option.value)}
+                  onPress={() => toggleTag(option.value)}
+                />
+              ))}
+            </View>
+          )}
+
+          {step === 'notes' && (
+            <View style={styles.notes}>
+              <Text style={styles.noteLabel}>Food</Text>
+              <TextInput
+                style={styles.input}
+                value={foodNote}
+                onChangeText={setFoodNote}
+                placeholder="What you ate, how it sat with you"
+                placeholderTextColor={colors.textFaint}
+                multiline
+              />
+              <Text style={styles.noteLabel}>Anything else</Text>
+              <TextInput
+                style={styles.input}
+                value={otherNote}
+                onChangeText={setOtherNote}
+                placeholder="Travel, illness, medication, a hard week"
+                placeholderTextColor={colors.textFaint}
+                multiline
+              />
+            </View>
+          )}
+
+          {step === 'done' && (
+            <View style={styles.summary}>
+              {summary.length === 0 ? (
+                <Text style={styles.summaryEmpty}>
+                  Nothing tapped — saving will still record the day as checked in.
+                </Text>
+              ) : (
+                summary.map((line) => (
+                  <Text key={line} style={styles.summaryLine}>
+                    {line}
+                  </Text>
+                ))
+              )}
+              <Text style={styles.footnote}>
+                None of this moves the prediction. It's here so you can see your own patterns.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </Animated.View>
+
+      <View style={styles.footer}>
+        {stepIndex > 0 && (
+          <Pressable style={styles.backButton} onPress={() => goTo(stepIndex - 1)}>
+            <Text style={styles.backText}>Back</Text>
+          </Pressable>
+        )}
+
+        <Squish
+          style={styles.nextWrap}
+          haptic={false}
+          disabled={busy}
+          onPress={() => (step === 'done' ? save() : goTo(stepIndex + 1))}
+        >
+          <View style={styles.nextButton}>
+            <Text style={styles.nextText}>
+              {step === 'done' ? `Save ${format(date, 'd MMM')}` : 'Next'}
+            </Text>
           </View>
         </Squish>
-      )}
+      </View>
 
-      <Text style={styles.footnote}>
-        None of this changes the prediction. The app won't pretend a symptom tells it something it
-        can't actually prove — it's here so you can see your own patterns.
-      </Text>
-    </ScrollView>
+      {step === 'done' && existingEntry && (
+        <Pressable disabled={busy} style={styles.clearButton} onPress={clearDay}>
+          <Text style={styles.clearText}>Clear this day</Text>
+        </Pressable>
+      )}
+    </LinearGradient>
   );
 }
 
 const makeStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    container: {
-      backgroundColor: colors.background,
-      flexGrow: 1,
-      gap: spacing.sm,
-      padding: spacing.md,
-      paddingBottom: spacing.xl,
+    screen: {
+      flex: 1,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
     },
-    heading: {
+    blobOne: {
+      left: -90,
+      opacity: 0.35,
+      position: 'absolute',
+      top: 40,
+    },
+    blobTwo: {
+      bottom: 60,
+      opacity: 0.3,
+      position: 'absolute',
+      right: -80,
+    },
+    progressTrack: {
+      backgroundColor: colors.border,
+      borderRadius: radius.pill,
+      height: 5,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      backgroundColor: colors.accent,
+      height: '100%',
+    },
+    dayLabel: {
+      ...typography.micro,
+      color: colors.textMuted,
+      marginTop: spacing.sm,
+    },
+    panel: {
+      flex: 1,
+      paddingTop: spacing.lg,
+    },
+    title: {
       ...typography.title,
       color: colors.text,
     },
-    intro: {
+    sub: {
       ...typography.bodySmall,
       color: colors.textMuted,
-      marginBottom: spacing.xs,
+      marginTop: spacing.xs,
+    },
+    stepBody: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingVertical: spacing.lg,
     },
     wrap: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: spacing.sm,
+      justifyContent: 'center',
     },
-    pair: {
-      flexDirection: 'row',
+    waterBlock: {
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    waterCount: {
+      ...typography.body,
+      color: colors.textMuted,
+    },
+    notes: {
       gap: spacing.sm,
     },
-    pairItem: {
-      flex: 1,
+    noteLabel: {
+      ...typography.label,
+      color: colors.textMuted,
     },
     input: {
       ...typography.body,
       backgroundColor: colors.surface,
       borderRadius: radius.md,
       color: colors.text,
-      minHeight: 64,
+      minHeight: 76,
       padding: spacing.md,
       textAlignVertical: 'top',
     },
-    saveButton: {
-      alignItems: 'center',
-      backgroundColor: colors.accent,
-      borderRadius: radius.pill,
-      marginTop: spacing.sm,
-      padding: spacing.md,
+    summary: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      gap: spacing.xs,
+      padding: spacing.lg,
     },
-    saveButtonText: {
-      ...typography.strong,
-      color: colors.onAccent,
+    summaryLine: {
+      ...typography.body,
+      color: colors.text,
     },
-    clearButton: {
-      alignItems: 'center',
-      padding: spacing.md,
-    },
-    clearButtonText: {
-      ...typography.bodySmall,
+    summaryEmpty: {
+      ...typography.body,
       color: colors.textMuted,
     },
     footnote: {
       ...typography.micro,
       color: colors.textFaint,
-      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+    footer: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingBottom: spacing.md,
+    },
+    backButton: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    backText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+    },
+    nextWrap: {
+      flex: 1,
+    },
+    nextButton: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      padding: spacing.md,
+    },
+    nextText: {
+      ...typography.strong,
+      color: colors.onAccent,
+    },
+    clearButton: {
+      alignItems: 'center',
+      paddingBottom: spacing.md,
+    },
+    clearText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
     },
   });

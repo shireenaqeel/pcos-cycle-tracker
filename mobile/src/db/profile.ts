@@ -9,6 +9,7 @@ interface UserProfileRow {
   self_reported_dx: number;
   created_at: string;
   display_name: string | null;
+  theme: string | null;
 }
 
 function rowToProfile(row: UserProfileRow): UserProfile {
@@ -18,6 +19,7 @@ function rowToProfile(row: UserProfileRow): UserProfile {
     selfReportedDx: row.self_reported_dx === 1,
     createdAt: row.created_at,
     displayName: row.display_name,
+    theme: row.theme as UserProfile['theme'],
   };
 }
 
@@ -41,12 +43,18 @@ export async function getOrCreateProfile(): Promise<UserProfile> {
     selfReportedDx: false,
     createdAt,
     displayName: null,
+    theme: null,
   };
 }
 
 export async function setPhenotype(phenotype: Phenotype): Promise<void> {
   const db = await getDb();
   await db.runAsync(`UPDATE user_profile SET phenotype = ? WHERE id = ?`, phenotype, LOCAL_USER_ID);
+}
+
+export async function setTheme(theme: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(`UPDATE user_profile SET theme = ? WHERE id = ?`, theme, LOCAL_USER_ID);
 }
 
 export async function setDisplayName(displayName: string | null): Promise<void> {

@@ -10,7 +10,7 @@ import { useFonts } from 'expo-font';
 import { Quicksand_600SemiBold, Quicksand_700Bold } from '@expo-google-fonts/quicksand';
 import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 
-import { getOrCreateProfile } from './src/db/profile';
+import { getOrCreateProfile, setTheme } from './src/db/profile';
 import type { MainTabParamList, RootStackParamList } from './src/navigation/types';
 import { AccuracyScreen } from './src/screens/AccuracyScreen';
 import { BackfillScreen } from './src/screens/BackfillScreen';
@@ -25,7 +25,7 @@ import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
-import { useThemeColors } from './src/theme';
+import { ThemeProvider, useThemeColors } from './src/theme';
 import type { UserProfile } from './src/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -76,10 +76,9 @@ function MainTabs() {
   );
 }
 
-export default function App() {
+function AppShell({ profile }: { profile: UserProfile }) {
   const colors = useThemeColors();
   const scheme = useColorScheme();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fontsLoaded] = useFonts({
     Quicksand_600SemiBold,
     Quicksand_700Bold,
@@ -88,13 +87,9 @@ export default function App() {
     Nunito_700Bold,
   });
 
-  useEffect(() => {
-    getOrCreateProfile().then(setProfile);
-  }, []);
-
   // Rendering before the fonts resolve would flash the system face and reflow
   // every screen once they land.
-  if (profile === null || !fontsLoaded) {
+  if (!fontsLoaded) {
     return (
       <View
         style={{
@@ -178,5 +173,23 @@ export default function App() {
       </NavigationContainer>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    getOrCreateProfile().then(setProfile);
+  }, []);
+
+  // The palette has to be known before anything paints, or the first frame
+  // renders in the wrong theme and then snaps.
+  if (profile === null) return null;
+
+  return (
+    <ThemeProvider initialTheme={profile.theme} onChange={(next) => void setTheme(next)}>
+      <AppShell profile={profile} />
+    </ThemeProvider>
   );
 }

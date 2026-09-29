@@ -1,11 +1,20 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile, setPhenotype } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
+import { paletteFor, THEME_OPTIONS, useTheme } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
@@ -22,6 +31,8 @@ const PHENOTYPE_OPTIONS: { value: Phenotype; label: string }[] = [
 export function SettingsScreen(_props: Props) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
+  const { themeName, chooseTheme } = useTheme();
+  const dark = useColorScheme() === 'dark';
   const [phenotype, setCurrent] = useState<Phenotype | null>(null);
   const [counts, setCounts] = useState<{ cycles: number; symptoms: number } | null>(null);
 
@@ -77,6 +88,36 @@ export function SettingsScreen(_props: Props) {
                 <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
                   {option.label}
                 </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Theme</Text>
+        <Text style={styles.cardBody}>
+          Light and dark follow your phone; this picks the colours used in both.
+        </Text>
+        <View style={styles.themeRow}>
+          {THEME_OPTIONS.map((option) => {
+            const palette = paletteFor(option.name, dark);
+            const selected = themeName === option.name;
+            return (
+              <Pressable
+                key={option.name}
+                style={[styles.themeChoice, selected && styles.themeChoiceSelected]}
+                onPress={() => chooseTheme(option.name)}
+              >
+                <View style={styles.swatchRow}>
+                  <View style={[styles.swatch, { backgroundColor: palette.accent }]} />
+                  <View style={[styles.swatch, { backgroundColor: palette.petal }]} />
+                  <View style={[styles.swatch, { backgroundColor: palette.sage }]} />
+                </View>
+                <Text style={[styles.themeLabel, selected && styles.themeLabelSelected]}>
+                  {option.label}
+                </Text>
+                <Text style={styles.themeBlurb}>{option.blurb}</Text>
               </Pressable>
             );
           })}
@@ -167,6 +208,44 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     optionLabelSelected: {
       color: colors.accent,
       fontFamily: fonts.bodyBold,
+    },
+    themeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    themeChoice: {
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      flexGrow: 1,
+      flexBasis: '45%',
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    themeChoiceSelected: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    swatchRow: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    swatch: {
+      borderRadius: radius.pill,
+      height: 18,
+      width: 18,
+    },
+    themeLabel: {
+      ...typography.strong,
+      color: colors.text,
+    },
+    themeLabelSelected: {
+      color: colors.accent,
+    },
+    themeBlurb: {
+      ...typography.micro,
+      color: colors.textMuted,
     },
     row: {
       flexDirection: 'row',

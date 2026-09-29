@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS user_profile (
   phenotype TEXT,
   self_reported_dx INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
-  display_name TEXT
+  display_name TEXT,
+  theme TEXT
 );
 
 CREATE TABLE IF NOT EXISTS cycle_log (
@@ -70,5 +71,9 @@ export const MIGRATIONS: { toVersion: number; columns: { table: string; column: 
       { table: 'daily_symptom_log', column: 'food_note', type: 'TEXT' },
       { table: 'daily_symptom_log', column: 'other_note', type: 'TEXT' },
     ],
+  },
+  {
+    toVersion: 3,
+    columns: [{ table: 'user_profile', column: 'theme', type: 'TEXT' }],
   },
 ];
