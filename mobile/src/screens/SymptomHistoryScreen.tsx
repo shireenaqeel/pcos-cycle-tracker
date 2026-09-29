@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 
 import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
+import { checkInLines, isCheckInEmpty } from '../lib/checkInSummary';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
@@ -77,14 +78,13 @@ export function SymptomHistoryScreen({ navigation }: Props) {
             </Text>
           )}
 
-          <View style={styles.metaRow}>
-            {entry.mood !== null && <Text style={styles.meta}>mood: {entry.mood}</Text>}
-            {entry.basalTemp !== null && <Text style={styles.meta}>{entry.basalTemp}°C</Text>}
-          </View>
+          {checkInLines(entry).map((line) => (
+            <Text key={line} style={styles.meta}>
+              {line}
+            </Text>
+          ))}
 
-          {entry.symptomTags.length === 0 && entry.mood === null && entry.basalTemp === null && (
-            <Text style={styles.meta}>Nothing noted for this day.</Text>
-          )}
+          {isCheckInEmpty(entry) && <Text style={styles.meta}>Nothing noted for this day.</Text>}
         </Pressable>
       ))}
     </ScrollView>
@@ -129,10 +129,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     tags: {
       ...typography.bodySmall,
       color: colors.text,
-    },
-    metaRow: {
-      flexDirection: 'row',
-      gap: spacing.md,
     },
     meta: {
       ...typography.micro,

@@ -7,6 +7,7 @@ import { format, isAfter, startOfDay } from 'date-fns';
 import { insertCycleLog, listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { getSymptomLogForDate } from '../db/symptoms';
+import { checkInLines, isCheckInEmpty } from '../lib/checkInSummary';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
@@ -122,8 +123,8 @@ export function DayDetailScreen({ navigation, route }: Props) {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>Symptoms</Text>
-        {symptoms === null ? (
+        <Text style={styles.cardLabel}>Check-in</Text>
+        {symptoms === null || isCheckInEmpty(symptoms) ? (
           <Text style={styles.empty}>Nothing recorded for this day.</Text>
         ) : (
           <>
@@ -132,10 +133,11 @@ export function DayDetailScreen({ navigation, route }: Props) {
                 {symptoms.symptomTags.map((tag) => TAG_LABELS[tag]).join(' · ')}
               </Text>
             )}
-            <Text style={styles.meta}>
-              {symptoms.mood === null ? '' : `mood: ${symptoms.mood}`}
-              {symptoms.basalTemp === null ? '' : `  ${symptoms.basalTemp}°C`}
-            </Text>
+            {checkInLines(symptoms).map((line) => (
+              <Text key={line} style={styles.meta}>
+                {line}
+              </Text>
+            ))}
           </>
         )}
         <Pressable

@@ -78,6 +78,9 @@ export function CheckInScreen({ navigation, route }: Props) {
   const [foodNote, setFoodNote] = useState('');
   const [otherNote, setOtherNote] = useState('');
   const [existingEntry, setExistingEntry] = useState(false);
+  // Not editable here, but carried through the save so an older reading isn't
+  // wiped by re-saving the day.
+  const [basalTemp, setBasalTemp] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
   const step = STEPS[stepIndex];
@@ -96,6 +99,7 @@ export function CheckInScreen({ navigation, route }: Props) {
       setTags(entry.symptomTags);
       setFoodNote(entry.foodNote ?? '');
       setOtherNote(entry.otherNote ?? '');
+      setBasalTemp(entry.basalTemp);
       setExistingEntry(true);
     });
     return () => {
@@ -132,7 +136,7 @@ export function CheckInScreen({ navigation, route }: Props) {
       userId: LOCAL_USER_ID,
       date: isoDate,
       symptomTags: tags,
-      basalTemp: null,
+      basalTemp,
       mood,
       stressLevel: stress,
       hydrationGlasses: hydration === 0 ? null : hydration,
