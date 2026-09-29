@@ -9,11 +9,13 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { resolvePredictions, type AccuracySummary } from '../engine/accuracy';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Accuracy'>;
 
 export function AccuracyScreen(_props: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [summary, setSummary] = useState<AccuracySummary | null>(null);
 
   useEffect(() => {
@@ -88,80 +90,80 @@ export function AccuracyScreen(_props: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  intro: {
-    color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.lg,
-  },
-  cardLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  headline: {
-    color: colors.accent,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  cardMeta: {
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  disclaimer: {
-    color: colors.textFaint,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  row: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: spacing.md,
-  },
-  rowText: {
-    gap: 2,
-  },
-  rowWindow: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  rowActual: {
-    color: colors.textMuted,
-    fontSize: 13,
-  },
-  verdict: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  verdictHit: {
-    color: colors.accent,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    intro: {
+      color: colors.textMuted,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      gap: spacing.sm,
+      padding: spacing.lg,
+    },
+    cardLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    headline: {
+      color: colors.accent,
+      fontSize: 28,
+      fontWeight: '700',
+    },
+    cardMeta: {
+      color: colors.text,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    disclaimer: {
+      color: colors.textFaint,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+    row: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      padding: spacing.md,
+    },
+    rowText: {
+      gap: 2,
+    },
+    rowWindow: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    rowActual: {
+      color: colors.textMuted,
+      fontSize: 13,
+    },
+    verdict: {
+      color: colors.textMuted,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    verdictHit: {
+      color: colors.accent,
+    },
+  });

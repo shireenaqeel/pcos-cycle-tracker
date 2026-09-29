@@ -7,7 +7,7 @@ import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile, setPhenotype } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
@@ -20,6 +20,8 @@ const PHENOTYPE_OPTIONS: { value: Phenotype; label: string }[] = [
 ];
 
 export function SettingsScreen(_props: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [phenotype, setCurrent] = useState<Phenotype | null>(null);
   const [counts, setCounts] = useState<{ cycles: number; symptoms: number } | null>(null);
 
@@ -107,6 +109,7 @@ export function SettingsScreen(_props: Props) {
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -115,75 +118,75 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  cardLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  cardBody: {
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  options: {
-    gap: spacing.sm,
-  },
-  option: {
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  optionSelected: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
-  optionLabel: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  optionLabelSelected: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rowLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  rowValue: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  note: {
-    color: colors.textFaint,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    cardLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    cardBody: {
+      color: colors.text,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    options: {
+      gap: spacing.sm,
+    },
+    option: {
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    optionSelected: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    optionLabel: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    optionLabelSelected: {
+      color: colors.accent,
+      fontWeight: '700',
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    rowLabel: {
+      color: colors.textMuted,
+      fontSize: 14,
+    },
+    rowValue: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    note: {
+      color: colors.textFaint,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+  });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
+  addDays,
   addMonths,
   eachDayOfInterval,
   endOfMonth,
@@ -10,12 +11,13 @@ import {
   isSameMonth,
   startOfMonth,
   startOfWeek,
+  subDays,
   subMonths,
 } from 'date-fns';
 
 import { toIsoDate } from '../lib/dates';
 import type { CycleCalendar } from '../lib/cycleDays';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemedStyles, useThemeColors, type ThemeColors } from '../theme';
 
 interface Props {
   calendar: CycleCalendar;
@@ -24,7 +26,24 @@ interface Props {
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+/**
+ * Where a day sits inside a run of consecutive marked days. A run is broken at
+ * the end of a week row as well as by an unmarked day, so a span never appears
+ * to wrap from Saturday to Sunday.
+ */
+function runEdges(
+  day: Date,
+  columnIndex: number,
+  marked: Set<string>
+): { isFirst: boolean; isLast: boolean } {
+  return {
+    isFirst: columnIndex === 0 || !marked.has(toIsoDate(subDays(day, 1))),
+    isLast: columnIndex === 6 || !marked.has(toIsoDate(addDays(day, 1))),
+  };
+}
+
 export function MonthCalendar({ calendar, onSelectDay }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
   const today = new Date();
 
@@ -62,178 +81,209 @@ export function MonthCalendar({ calendar, onSelectDay }: Props) {
       </View>
 
       <View style={styles.grid}>
-        {days.map((day) => {
+        {days.map((day, index) => {
           const iso = toIsoDate(day);
+          const columnIndex = index % 7;
           const isPeriod = calendar.periodDates.has(iso);
           const isPredicted = !isPeriod && calendar.predictedDates.has(iso);
-          const hasSymptoms = calendar.symptomDates.has(iso);
-          const outsideMonth = !isSameMonth(day, visibleMonth);
+          const band = isPeriod
+            ? runEdges(day, columnIndex, calendar.periodDates)
+            : isPredicted
+              ? runEdges(day, columnIndex, calendar.predictedDates)
+              : null;
 
           return (
             <Pressable key={iso} style={styles.cell} onPress={() => onSelectDay(day)}>
-              <View
-                style={[
-                  styles.dayCircle,
-                  isPeriod && styles.dayPeriod,
-                  isPredicted && styles.dayPredicted,
-                  isSameDay(day, today) && styles.dayToday,
-                ]}
-              >
+              {band !== null && (
+                <View
+                  style={[
+                    styles.band,
+                    isPeriod ? styles.bandPeriod : styles.bandPredicted,
+                    band.isFirst && styles.bandFirst,
+                    band.isLast && styles.bandLast,
+                  ]}
+                />
+              )}
+              <View style={[styles.dayInner, isSameDay(day, today) && styles.dayToday]}>
                 <Text
                   style={[
                     styles.dayText,
-                    outsideMonth && styles.dayTextOutside,
+                    !isSameMonth(day, visibleMonth) && styles.dayTextOutside,
                     isPeriod && styles.dayTextPeriod,
                   ]}
                 >
                   {format(day, 'd')}
                 </Text>
               </View>
-              <View style={[styles.symptomDot, hasSymptoms && styles.symptomDotVisible]} />
+              <View
+                style={[
+                  styles.symptomDot,
+                  calendar.symptomDates.has(iso) && styles.symptomDotVisible,
+                ]}
+              />
             </Pressable>
           );
         })}
       </View>
 
-      <View style={styles.legend}>
-        <Legend swatchStyle={styles.dayPeriod} label="Period" />
-        <Legend swatchStyle={styles.dayPredicted} label="Predicted" />
-        <Legend swatchStyle={styles.symptomDotVisible} label="Symptoms" round />
+      <Legend />
+    </View>
+  );
+}
+
+function Legend() {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
+
+  return (
+    <View style={styles.legend}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendSwatch, { backgroundColor: colors.accent }]} />
+        <Text style={styles.legendLabel}>Period</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendSwatch, { backgroundColor: colors.accentSoft }]} />
+        <Text style={styles.legendLabel}>Predicted</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
+        <Text style={styles.legendLabel}>Symptoms</Text>
       </View>
     </View>
   );
 }
 
-function Legend({
-  swatchStyle,
-  label,
-  round,
-}: {
-  swatchStyle: object;
-  label: string;
-  round?: boolean;
-}) {
-  return (
-    <View style={styles.legendItem}>
-      <View style={[round ? styles.legendDot : styles.legendSwatch, swatchStyle]} />
-      <Text style={styles.legendLabel}>{label}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  navButton: {
-    alignItems: 'center',
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  navButtonText: {
-    color: colors.accent,
-    fontSize: 24,
-    lineHeight: 26,
-  },
-  monthLabel: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  weekdayRow: {
-    flexDirection: 'row',
-  },
-  weekdayLabel: {
-    color: colors.textFaint,
-    fontSize: 12,
-    textAlign: 'center',
-    width: `${100 / 7}%`,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  cell: {
-    alignItems: 'center',
-    paddingVertical: 3,
-    width: `${100 / 7}%`,
-  },
-  dayCircle: {
-    alignItems: 'center',
-    aspectRatio: 1,
-    borderRadius: 999,
-    justifyContent: 'center',
-    width: '78%',
-  },
-  dayPeriod: {
-    backgroundColor: colors.accent,
-  },
-  dayPredicted: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-  },
-  dayToday: {
-    borderColor: colors.text,
-    borderWidth: 2,
-  },
-  dayText: {
-    color: colors.text,
-    fontSize: 14,
-  },
-  dayTextOutside: {
-    color: colors.textFaint,
-  },
-  dayTextPeriod: {
-    color: colors.onAccent,
-    fontWeight: '700',
-  },
-  symptomDot: {
-    borderRadius: 999,
-    height: 4,
-    marginTop: 2,
-    width: 4,
-  },
-  symptomDotVisible: {
-    backgroundColor: colors.textMuted,
-  },
-  legend: {
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-  },
-  legendItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  legendSwatch: {
-    borderRadius: 999,
-    height: 14,
-    width: 14,
-  },
-  legendDot: {
-    borderRadius: 999,
-    height: 6,
-    width: 6,
-  },
-  legendLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    header: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    navButton: {
+      alignItems: 'center',
+      height: 32,
+      justifyContent: 'center',
+      width: 32,
+    },
+    navButtonText: {
+      color: colors.accent,
+      fontSize: 24,
+      lineHeight: 26,
+    },
+    monthLabel: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    weekdayRow: {
+      flexDirection: 'row',
+    },
+    weekdayLabel: {
+      color: colors.textFaint,
+      fontSize: 12,
+      textAlign: 'center',
+      width: `${100 / 7}%`,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    cell: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 3,
+      width: `${100 / 7}%`,
+    },
+    // Spans the whole cell so consecutive days meet with no seam; the ends of a
+    // run get the rounding, which is what turns a row of days into one pill.
+    band: {
+      bottom: 9,
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 3,
+    },
+    bandPeriod: {
+      backgroundColor: colors.accent,
+    },
+    bandPredicted: {
+      backgroundColor: colors.accentSoft,
+    },
+    bandFirst: {
+      borderBottomLeftRadius: 999,
+      borderTopLeftRadius: 999,
+      marginLeft: 2,
+    },
+    bandLast: {
+      borderBottomRightRadius: 999,
+      borderTopRightRadius: 999,
+      marginRight: 2,
+    },
+    dayInner: {
+      alignItems: 'center',
+      aspectRatio: 1,
+      borderRadius: 999,
+      justifyContent: 'center',
+      width: '76%',
+    },
+    dayToday: {
+      borderColor: colors.text,
+      borderWidth: 2,
+    },
+    dayText: {
+      color: colors.text,
+      fontSize: 14,
+    },
+    dayTextOutside: {
+      color: colors.textFaint,
+    },
+    dayTextPeriod: {
+      color: colors.onAccent,
+      fontWeight: '700',
+    },
+    symptomDot: {
+      borderRadius: 999,
+      height: 4,
+      marginTop: 2,
+      width: 4,
+    },
+    symptomDotVisible: {
+      backgroundColor: colors.textMuted,
+    },
+    legend: {
+      borderTopColor: colors.border,
+      borderTopWidth: 1,
+      flexDirection: 'row',
+      gap: spacing.md,
+      marginTop: spacing.sm,
+      paddingTop: spacing.sm,
+    },
+    legendItem: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    legendSwatch: {
+      borderRadius: 999,
+      height: 14,
+      width: 14,
+    },
+    legendDot: {
+      borderRadius: 999,
+      height: 6,
+      width: 6,
+    },
+    legendLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+    },
+  });

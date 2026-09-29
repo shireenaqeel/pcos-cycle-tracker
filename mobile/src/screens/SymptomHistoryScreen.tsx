@@ -8,7 +8,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SymptomHistory'>;
@@ -25,6 +25,8 @@ const TAG_LABELS: Record<SymptomTag, string> = {
 };
 
 export function SymptomHistoryScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [entries, setEntries] = useState<DailySymptomLog[] | null>(null);
 
   useFocusEffect(
@@ -89,55 +91,55 @@ export function SymptomHistoryScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  intro: {
-    color: colors.textMuted,
-    fontSize: 13,
-  },
-  empty: {
-    color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  cardPressed: {
-    backgroundColor: colors.accentSoft,
-  },
-  date: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  tags: {
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  meta: {
-    color: colors.textFaint,
-    fontSize: 12,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    intro: {
+      color: colors.textMuted,
+      fontSize: 13,
+    },
+    empty: {
+      color: colors.textMuted,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    cardPressed: {
+      backgroundColor: colors.accentSoft,
+    },
+    date: {
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    tags: {
+      color: colors.text,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    meta: {
+      color: colors.textFaint,
+      fontSize: 12,
+    },
+  });

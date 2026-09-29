@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { ActivityIndicator, Pressable, useColorScheme, View } from 'react-native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
 import { SymptomLogScreen } from './src/screens/SymptomLogScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
-import { colors } from './src/theme';
+import { useThemeColors } from './src/theme';
 import type { UserProfile } from './src/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -36,6 +36,8 @@ const TAB_ICONS: Record<keyof MainTabParamList, keyof typeof Ionicons.glyphMap> 
 };
 
 function MainTabs() {
+  const colors = useThemeColors();
+
   return (
     <Tabs.Navigator
       screenOptions={({ route, navigation }) => ({
@@ -72,6 +74,8 @@ function MainTabs() {
 }
 
 export default function App() {
+  const colors = useThemeColors();
+  const scheme = useColorScheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -95,7 +99,19 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer
+        theme={{
+          ...(scheme === 'dark' ? DarkTheme : DefaultTheme),
+          colors: {
+            ...(scheme === 'dark' ? DarkTheme : DefaultTheme).colors,
+            background: colors.background,
+            border: colors.border,
+            card: colors.surface,
+            primary: colors.accent,
+            text: colors.text,
+          },
+        }}
+      >
         <Stack.Navigator
           // A null phenotype means onboarding has never run; 'unknown' means it ran and
           // the answer was "not sure", which is an answer, not a reason to ask again.
@@ -148,7 +164,7 @@ export default function App() {
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         </Stack.Navigator>
       </NavigationContainer>
-      <StatusBar style="auto" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </SafeAreaProvider>
   );
 }

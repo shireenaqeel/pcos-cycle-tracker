@@ -9,7 +9,7 @@ import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = CompositeScreenProps<
@@ -18,6 +18,8 @@ type Props = CompositeScreenProps<
 >;
 
 export function InsightsScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [cycles, setCycles] = useState<CycleLog[] | null>(null);
 
   useFocusEffect(
@@ -143,6 +145,7 @@ export function InsightsScreen({ navigation }: Props) {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.statRow}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -151,98 +154,98 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  intro: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  cardLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  big: {
-    color: colors.accent,
-    fontSize: 26,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 2,
-  },
-  statLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  statValue: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  note: {
-    color: colors.textFaint,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: spacing.xs,
-  },
-  empty: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  linkCard: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  linkCardPressed: {
-    backgroundColor: colors.accentSoft,
-  },
-  linkTextGroup: {
-    flex: 1,
-    gap: 2,
-  },
-  linkTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  linkBody: {
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  chevron: {
-    color: colors.accent,
-    fontSize: 22,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    intro: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    cardLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    big: {
+      color: colors.accent,
+      fontSize: 26,
+      fontWeight: '700',
+      marginBottom: spacing.xs,
+    },
+    statRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 2,
+    },
+    statLabel: {
+      color: colors.textMuted,
+      fontSize: 14,
+    },
+    statValue: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    note: {
+      color: colors.textFaint,
+      fontSize: 12,
+      lineHeight: 17,
+      marginTop: spacing.xs,
+    },
+    empty: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    linkCard: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      flexDirection: 'row',
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    linkCardPressed: {
+      backgroundColor: colors.accentSoft,
+    },
+    linkTextGroup: {
+      flex: 1,
+      gap: 2,
+    },
+    linkTitle: {
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    linkBody: {
+      color: colors.textMuted,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    chevron: {
+      color: colors.accent,
+      fontSize: 22,
+    },
+  });

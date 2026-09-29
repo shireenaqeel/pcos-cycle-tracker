@@ -15,7 +15,7 @@ import {
   subMonths,
 } from 'date-fns';
 
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   value: Date;
@@ -28,6 +28,7 @@ interface Props {
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function DateGrid({ value, onChange, maxDate, minDate }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(value));
 
   const days = eachDayOfInterval({
@@ -96,71 +97,71 @@ export function DateGrid({ value, onChange, maxDate, minDate }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  navButton: {
-    alignItems: 'center',
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  navButtonText: {
-    color: colors.accent,
-    fontSize: 24,
-    lineHeight: 26,
-  },
-  monthLabel: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  weekdayRow: {
-    flexDirection: 'row',
-  },
-  weekdayLabel: {
-    color: colors.textFaint,
-    fontSize: 12,
-    textAlign: 'center',
-    width: `${100 / 7}%`,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  cell: {
-    alignItems: 'center',
-    aspectRatio: 1,
-    borderRadius: radius.sm,
-    justifyContent: 'center',
-    width: `${100 / 7}%`,
-  },
-  cellSelected: {
-    backgroundColor: colors.accent,
-  },
-  cellText: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  cellTextDimmed: {
-    color: colors.textFaint,
-  },
-  cellTextOutOfRange: {
-    color: colors.border,
-  },
-  cellTextSelected: {
-    color: colors.onAccent,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    header: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    navButton: {
+      alignItems: 'center',
+      height: 32,
+      justifyContent: 'center',
+      width: 32,
+    },
+    navButtonText: {
+      color: colors.accent,
+      fontSize: 24,
+      lineHeight: 26,
+    },
+    monthLabel: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    weekdayRow: {
+      flexDirection: 'row',
+    },
+    weekdayLabel: {
+      color: colors.textFaint,
+      fontSize: 12,
+      textAlign: 'center',
+      width: `${100 / 7}%`,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    cell: {
+      alignItems: 'center',
+      aspectRatio: 1,
+      borderRadius: radius.sm,
+      justifyContent: 'center',
+      width: `${100 / 7}%`,
+    },
+    cellSelected: {
+      backgroundColor: colors.accent,
+    },
+    cellText: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    cellTextDimmed: {
+      color: colors.textFaint,
+    },
+    cellTextOutOfRange: {
+      color: colors.border,
+    },
+    cellTextSelected: {
+      color: colors.onAccent,
+      fontWeight: '600',
+    },
+  });

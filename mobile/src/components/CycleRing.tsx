@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 
 import { ringGeometry } from '../lib/ring';
-import { colors, spacing } from '../theme';
+import { spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   cycleDay: number;
@@ -28,6 +28,8 @@ function arcProps(fromFraction: number, toFraction: number) {
 }
 
 export function CycleRing({ cycleDay, windowStartDay, windowEndDay, caption, headline }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const ring = ringGeometry({ cycleDay, windowStartDay, windowEndDay });
 
   return (
@@ -83,6 +85,7 @@ export function CycleRing({ cycleDay, windowStartDay, windowEndDay, caption, hea
 }
 
 function LegendItem({ color, label }: { color: string; label: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.legendItem}>
       <View style={[styles.legendSwatch, { backgroundColor: color }]} />
@@ -91,57 +94,57 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  center: {
-    alignItems: 'center',
-    height: SIZE,
-    justifyContent: 'center',
-    position: 'absolute',
-    width: SIZE,
-  },
-  dayLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  dayNumber: {
-    color: colors.text,
-    fontSize: 54,
-    fontWeight: '800',
-    lineHeight: 60,
-  },
-  caption: {
-    color: colors.textMuted,
-    fontSize: 13,
-  },
-  headline: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  legend: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  legendItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  legendSwatch: {
-    borderRadius: 999,
-    height: 10,
-    width: 10,
-  },
-  legendLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    center: {
+      alignItems: 'center',
+      height: SIZE,
+      justifyContent: 'center',
+      position: 'absolute',
+      width: SIZE,
+    },
+    dayLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+    },
+    dayNumber: {
+      color: colors.text,
+      fontSize: 54,
+      fontWeight: '800',
+      lineHeight: 60,
+    },
+    caption: {
+      color: colors.textMuted,
+      fontSize: 13,
+    },
+    headline: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '700',
+      marginTop: 4,
+      textAlign: 'center',
+    },
+    legend: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    legendItem: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    legendSwatch: {
+      borderRadius: 999,
+      height: 10,
+      width: 10,
+    },
+    legendLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+    },
+  });

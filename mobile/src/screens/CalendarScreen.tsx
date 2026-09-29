@@ -13,7 +13,7 @@ import { predictNextCycle } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { toIsoDate } from '../lib/dates';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { colors, spacing } from '../theme';
+import { spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Calendar'>,
@@ -21,6 +21,8 @@ type Props = CompositeScreenProps<
 >;
 
 export function CalendarScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [calendar, setCalendar] = useState<CycleCalendar | null>(null);
 
   useFocusEffect(
@@ -64,22 +66,22 @@ export function CalendarScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  hint: {
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.md,
+      padding: spacing.md,
+    },
+    hint: {
+      color: colors.textMuted,
+      fontSize: 13,
+      lineHeight: 19,
+    },
+  });

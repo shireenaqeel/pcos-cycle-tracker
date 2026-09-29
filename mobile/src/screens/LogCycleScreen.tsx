@@ -8,7 +8,7 @@ import { insertCycleLog } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LogCycle'>;
@@ -22,6 +22,7 @@ const FLOW_OPTIONS: { value: FlowIntensity; label: string }[] = [
 ];
 
 export function LogCycleScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [startDate, setStartDate] = useState(() => new Date());
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [flow, setFlow] = useState<FlowIntensity | null>(null);
@@ -97,74 +98,74 @@ export function LogCycleScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  gap: {
-    gap: spacing.sm,
-  },
-  sectionLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    marginTop: spacing.sm,
-    textTransform: 'uppercase',
-  },
-  ghostButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  ghostButtonText: {
-    color: colors.accent,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  flowRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  flowOption: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    padding: spacing.md,
-  },
-  flowOptionSelected: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
-  flowOptionText: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  flowOptionTextSelected: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  saveButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    marginTop: spacing.md,
-    padding: spacing.md,
-  },
-  saveButtonPressed: {
-    opacity: 0.85,
-  },
-  saveButtonText: {
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    gap: {
+      gap: spacing.sm,
+    },
+    sectionLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      marginTop: spacing.sm,
+      textTransform: 'uppercase',
+    },
+    ghostButton: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    ghostButtonText: {
+      color: colors.accent,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    flowRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    flowOption: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      flex: 1,
+      padding: spacing.md,
+    },
+    flowOptionSelected: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    flowOptionText: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    flowOptionTextSelected: {
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    saveButton: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      marginTop: spacing.md,
+      padding: spacing.md,
+    },
+    saveButtonPressed: {
+      opacity: 0.85,
+    },
+    saveButtonText: {
+      color: colors.onAccent,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });

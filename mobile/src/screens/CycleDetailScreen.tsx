@@ -15,7 +15,7 @@ import { DateGrid } from '../components/DateGrid';
 import { deleteCycleLog, getCycleLog, updateCycleLog } from '../db/cycles';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CycleDetail'>;
@@ -29,6 +29,8 @@ const FLOW_OPTIONS: { value: FlowIntensity; label: string }[] = [
 ];
 
 export function CycleDetailScreen({ navigation, route }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { cycleId } = route.params;
   const [cycle, setCycle] = useState<CycleLog | null>(null);
 
@@ -51,6 +53,7 @@ export function CycleDetailScreen({ navigation, route }: Props) {
 }
 
 function CycleEditor({ cycle, onDone }: { cycle: CycleLog; onDone: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   const [startDate, setStartDate] = useState(() => fromIsoDate(cycle.startDate));
   const [endDate, setEndDate] = useState<Date | null>(() =>
     cycle.endDate === null ? null : fromIsoDate(cycle.endDate)
@@ -155,101 +158,101 @@ function CycleEditor({ cycle, onDone }: { cycle: CycleLog; onDone: () => void })
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  gap: {
-    gap: spacing.sm,
-  },
-  provenance: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: radius.md,
-    color: colors.text,
-    fontSize: 13,
-    lineHeight: 19,
-    padding: spacing.md,
-  },
-  sectionLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    marginTop: spacing.sm,
-    textTransform: 'uppercase',
-  },
-  ghostButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  ghostButtonText: {
-    color: colors.accent,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  flowRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  flowOption: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    padding: spacing.md,
-  },
-  flowOptionSelected: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
-  flowOptionText: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  flowOptionTextSelected: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  saveButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    marginTop: spacing.md,
-    padding: spacing.md,
-  },
-  saveButtonText: {
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  deleteButton: {
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  deleteButtonText: {
-    color: colors.accent,
-    fontSize: 15,
-  },
-  footnote: {
-    color: colors.textFaint,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    gap: {
+      gap: spacing.sm,
+    },
+    provenance: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.md,
+      color: colors.text,
+      fontSize: 13,
+      lineHeight: 19,
+      padding: spacing.md,
+    },
+    sectionLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      marginTop: spacing.sm,
+      textTransform: 'uppercase',
+    },
+    ghostButton: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    ghostButtonText: {
+      color: colors.accent,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    flowRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    flowOption: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      flex: 1,
+      padding: spacing.md,
+    },
+    flowOptionSelected: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    flowOptionText: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    flowOptionTextSelected: {
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    saveButton: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      marginTop: spacing.md,
+      padding: spacing.md,
+    },
+    saveButtonText: {
+      color: colors.onAccent,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    deleteButton: {
+      alignItems: 'center',
+      padding: spacing.md,
+    },
+    deleteButtonText: {
+      color: colors.accent,
+      fontSize: 15,
+    },
+    footnote: {
+      color: colors.textFaint,
+      fontSize: 12,
+      textAlign: 'center',
+    },
+  });

@@ -8,7 +8,7 @@ import { insertCycleLog } from '../db/cycles';
 import { LOCAL_USER_ID, setPhenotype } from '../db/profile';
 import { toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
@@ -37,6 +37,8 @@ const PHENOTYPE_OPTIONS: { value: Phenotype; label: string; hint: string }[] = [
 ];
 
 export function OnboardingScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [step, setStep] = useState<'intro' | 'phenotype' | 'lastPeriod'>('intro');
   const [chosen, setChosen] = useState<Phenotype | null>(null);
   const [lastPeriod, setLastPeriod] = useState(() => new Date());
@@ -142,92 +144,92 @@ export function OnboardingScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  progress: {
-    alignSelf: 'center',
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  pip: {
-    backgroundColor: colors.border,
-    borderRadius: 999,
-    height: 6,
-    width: 18,
-  },
-  pipActive: {
-    backgroundColor: colors.accent,
-  },
-  stepBody: {
-    gap: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 25,
-    fontWeight: '700',
-    lineHeight: 32,
-  },
-  paragraph: {
-    color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  footnote: {
-    color: colors.textFaint,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  options: {
-    gap: spacing.sm,
-  },
-  option: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  optionPressed: {
-    backgroundColor: colors.accentSoft,
-  },
-  optionLabel: {
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  optionHint: {
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  primaryButtonText: {
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  skipButton: {
-    alignItems: 'center',
-    padding: spacing.sm,
-  },
-  skipButtonText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    progress: {
+      alignSelf: 'center',
+      flexDirection: 'row',
+      gap: spacing.xs,
+      marginBottom: spacing.lg,
+    },
+    pip: {
+      backgroundColor: colors.border,
+      borderRadius: 999,
+      height: 6,
+      width: 18,
+    },
+    pipActive: {
+      backgroundColor: colors.accent,
+    },
+    stepBody: {
+      gap: spacing.md,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 25,
+      fontWeight: '700',
+      lineHeight: 32,
+    },
+    paragraph: {
+      color: colors.textMuted,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    footnote: {
+      color: colors.textFaint,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+    options: {
+      gap: spacing.sm,
+    },
+    option: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    optionPressed: {
+      backgroundColor: colors.accentSoft,
+    },
+    optionLabel: {
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: '600',
+    },
+    optionHint: {
+      color: colors.textMuted,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    primaryButton: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    primaryButtonText: {
+      color: colors.onAccent,
+      fontSize: 16,
+      fontWeight: '700',
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    skipButton: {
+      alignItems: 'center',
+      padding: spacing.sm,
+    },
+    skipButtonText: {
+      color: colors.accent,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+  });

@@ -15,7 +15,7 @@ import { MODEL_VERSION, predictNextCycle } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, CycleRangePrediction } from '../types';
 
 type Props = CompositeScreenProps<
@@ -30,6 +30,8 @@ interface Loaded {
 }
 
 export function TodayScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [data, setData] = useState<Loaded | null>(null);
 
   useFocusEffect(
@@ -189,135 +191,135 @@ function windowPhrase(startIso: string, endIso: string): string {
   return `Expected window passed ${Math.abs(daysToEnd)} ${Math.abs(daysToEnd) === 1 ? 'day' : 'days'} ago`;
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  ringCard: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-  },
-  windowLine: {
-    color: colors.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  emptyHero: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.lg,
-    gap: spacing.xs,
-    padding: spacing.lg,
-  },
-  emptyKicker: {
-    color: colors.accentSoft,
-    fontSize: 12,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  emptyHeadline: {
-    color: colors.onAccent,
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 30,
-  },
-  emptyBody: {
-    color: colors.accentSoft,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  actions: {
-    gap: spacing.sm,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    padding: spacing.md,
-  },
-  primaryButtonText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    padding: spacing.md,
-  },
-  secondaryButtonText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  cardLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  cardBody: {
-    color: colors.text,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  disclaimer: {
-    color: colors.textFaint,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  historyRow: {
-    alignItems: 'center',
-    borderRadius: radius.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.sm,
-  },
-  historyRowPressed: {
-    backgroundColor: colors.accentSoft,
-  },
-  historyDate: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  historyMeta: {
-    color: colors.textFaint,
-    fontSize: 12,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.md,
+      padding: spacing.md,
+    },
+    ringCard: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      gap: spacing.xs,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.lg,
+    },
+    windowLine: {
+      color: colors.textMuted,
+      fontSize: 14,
+      textAlign: 'center',
+    },
+    emptyHero: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.lg,
+      gap: spacing.xs,
+      padding: spacing.lg,
+    },
+    emptyKicker: {
+      color: colors.accentSoft,
+      fontSize: 12,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+    },
+    emptyHeadline: {
+      color: colors.onAccent,
+      fontSize: 24,
+      fontWeight: '700',
+      lineHeight: 30,
+    },
+    emptyBody: {
+      color: colors.accentSoft,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    actions: {
+      gap: spacing.sm,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    primaryButton: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      padding: spacing.md,
+    },
+    primaryButtonText: {
+      color: colors.accent,
+      fontSize: 16,
+      fontWeight: '700',
+    },
+    secondaryButton: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      flex: 1,
+      padding: spacing.md,
+    },
+    secondaryButtonText: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    cardLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    cardBody: {
+      color: colors.text,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    disclaimer: {
+      color: colors.textFaint,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+    historyRow: {
+      alignItems: 'center',
+      borderRadius: radius.sm,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.xs,
+      paddingVertical: spacing.sm,
+    },
+    historyRowPressed: {
+      backgroundColor: colors.accentSoft,
+    },
+    historyDate: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    historyMeta: {
+      color: colors.textFaint,
+      fontSize: 12,
+    },
+  });

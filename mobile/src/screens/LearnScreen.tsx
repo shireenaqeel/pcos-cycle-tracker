@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { contentForPhenotype } from '../content';
 import { getOrCreateProfile } from '../db/profile';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
 import type { EducationContent, Phenotype } from '../types';
 
 type Props = CompositeScreenProps<
@@ -16,6 +16,7 @@ type Props = CompositeScreenProps<
 >;
 
 export function LearnScreen(_props: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [phenotype, setPhenotype] = useState<Phenotype | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -44,6 +45,7 @@ export function LearnScreen(_props: Props) {
 }
 
 function Article({ article }: { article: EducationContent }) {
+  const styles = useThemedStyles(makeStyles);
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -73,56 +75,56 @@ function Article({ article }: { article: EducationContent }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  intro: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.xs,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  toggle: {
-    color: colors.accent,
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: spacing.xs,
-  },
-  body: {
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  paragraph: {
-    color: colors.text,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  sourcesLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    marginTop: spacing.sm,
-    textTransform: 'uppercase',
-  },
-  citation: {
-    color: colors.textFaint,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    intro: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: spacing.xs,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    toggle: {
+      color: colors.accent,
+      fontSize: 13,
+      fontWeight: '600',
+      marginTop: spacing.xs,
+    },
+    body: {
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    paragraph: {
+      color: colors.text,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    sourcesLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      marginTop: spacing.sm,
+      textTransform: 'uppercase',
+    },
+    citation: {
+      color: colors.textFaint,
+      fontSize: 12,
+      lineHeight: 17,
+    },
+  });

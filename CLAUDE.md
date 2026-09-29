@@ -68,7 +68,10 @@ Already built and working — do not redo this, extend it:
 - `mobile/src/lib/dates.ts` — `toIsoDate` / `fromIsoDate`. Use these, never
   `new Date(isoString)` or `.toISOString().slice(0, 10)`; see "Date
   handling" below.
-- `mobile/src/theme.ts` — shared colors, spacing, radii.
+- `mobile/src/theme.ts` — light and dark palettes, `spacing`, `radius`, and
+  the two hooks every styled component uses. See "Theming" below.
+- `mobile/src/components/CycleRing.tsx` + `mobile/src/lib/ring.ts` — the
+  cycle-progress ring on Today, with its arc geometry under test.
 
 Not built, deliberately: the server (nothing needs it). `daily_symptom_log`
 and `prediction_snapshot` are now both written and read.
@@ -432,6 +435,36 @@ trace to one root: `uuid`'s missing buffer bounds check, reached via
 build tooling, not code that ships to the device, and `npm audit fix --force`
 would break the SDK 57 pin. It clears when Expo bumps the dependency.
 
+## Theming — the pattern to follow in new screens
+
+Light and dark both ship, following the system setting. There is no in-app
+toggle, deliberately: the OS already has one.
+
+Styles must be built per-palette, not at module load, or dark mode silently
+stops reacting. Every styled component follows this shape:
+
+```tsx
+export function Thing() {
+  const styles = useThemedStyles(makeStyles);   // at the top, before other hooks
+  const colors = useThemeColors();              // only if a colour is needed inline
+  ...
+}
+
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({ ... });
+```
+
+`makeStyles` lives at module level so its identity is stable and
+`useThemedStyles` can memoise on the palette alone. `useThemeColors` is for
+props that take a colour directly — `ActivityIndicator`, `Ionicons`,
+`placeholderTextColor`.
+
+Two things that are easy to get wrong:
+
+- **`app.json` needs `userInterfaceStyle: "automatic"`.** It shipped as
+  `"light"`, which pins the app light no matter what the palette code does.
+- The dark accent is a *lighter* pink than the light one. Reusing the light
+  accent on a dark ground reads as muddy and fails contrast.
+
 ## App flow
 
 Modelled on how mainstream period trackers are laid out, because the
@@ -445,10 +478,16 @@ conventions are what people already know:
 - **Today** is the hero: cycle day, a plain-language line ("Next period
   expected in 6 days"), the window with its confidence, what the prediction
   is based on, and recent periods.
-- **Calendar** is the centrepiece a tracker is judged on. Tapping any day
-  opens `DayDetail`, which shows what's recorded and offers the two actions
-  that make sense for that date — so logging no longer means hunting for a
-  screen.
+- **Today** leads with `CycleRing`: cycle day in the middle, elapsed days as
+  a filled arc, the predicted window as a band behind it. The ring *stretches*
+  when a period is late rather than overflowing, because for an irregular
+  cycle that is an ordinary week, not an error state.
+- **Calendar** is the centrepiece a tracker is judged on. Consecutive marked
+  days render as one connected pill — rounding only at the ends of a run, and
+  runs break at week boundaries so nothing appears to wrap from Saturday to
+  Sunday (`runEdges` in `MonthCalendar`). Tapping any day opens `DayDetail`,
+  which shows what's recorded and offers the two actions that make sense for
+  that date — so logging no longer means hunting for a screen.
 - **Your numbers** holds the descriptive stats and links out to track record
   and symptom history.
 - **Settings** exists mainly so phenotype is changeable after onboarding,

@@ -8,12 +8,13 @@ import { insertCycleLog, listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Backfill'>;
 
 export function BackfillScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const [selected, setSelected] = useState(() => new Date());
   const [cycles, setCycles] = useState<CycleLog[]>([]);
   const [saving, setSaving] = useState(false);
@@ -86,70 +87,70 @@ export function BackfillScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  intro: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  addButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  addButtonPressed: {
-    opacity: 0.85,
-  },
-  addButtonDisabled: {
-    backgroundColor: colors.textFaint,
-  },
-  addButtonText: {
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  list: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  listTitle: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
-  },
-  listRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-  },
-  listDate: {
-    color: colors.text,
-    fontSize: 15,
-  },
-  listSource: {
-    color: colors.textFaint,
-    fontSize: 12,
-  },
-  doneButton: {
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  doneButtonText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.md,
+      padding: spacing.md,
+    },
+    intro: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    addButton: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    addButtonPressed: {
+      opacity: 0.85,
+    },
+    addButtonDisabled: {
+      backgroundColor: colors.textFaint,
+    },
+    addButtonText: {
+      color: colors.onAccent,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    list: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    listTitle: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      marginBottom: spacing.sm,
+      textTransform: 'uppercase',
+    },
+    listRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.xs,
+    },
+    listDate: {
+      color: colors.text,
+      fontSize: 15,
+    },
+    listSource: {
+      color: colors.textFaint,
+      fontSize: 12,
+    },
+    doneButton: {
+      alignItems: 'center',
+      padding: spacing.md,
+    },
+    doneButtonText: {
+      color: colors.accent,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });

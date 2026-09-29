@@ -9,7 +9,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { getSymptomLogForDate } from '../db/symptoms';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DayDetail'>;
@@ -26,6 +26,8 @@ const TAG_LABELS: Record<SymptomTag, string> = {
 };
 
 export function DayDetailScreen({ navigation, route }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { date } = route.params;
   const [cycleOnDay, setCycleOnDay] = useState<CycleLog | null>(null);
   const [symptoms, setSymptoms] = useState<DailySymptomLog | null>(null);
@@ -149,76 +151,76 @@ export function DayDetailScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  date: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  cardLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  cardBody: {
-    color: colors.text,
-    fontSize: 15,
-    lineHeight: 21,
-  },
-  empty: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  meta: {
-    color: colors.textFaint,
-    fontSize: 12,
-  },
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  buttonText: {
-    color: colors.onAccent,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  ghostButton: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  ghostButtonText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    loading: {
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      flex: 1,
+      justifyContent: 'center',
+    },
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    date: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: '700',
+      marginBottom: spacing.xs,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    cardLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    cardBody: {
+      color: colors.text,
+      fontSize: 15,
+      lineHeight: 21,
+    },
+    empty: {
+      color: colors.textMuted,
+      fontSize: 14,
+    },
+    meta: {
+      color: colors.textFaint,
+      fontSize: 12,
+    },
+    button: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    buttonText: {
+      color: colors.onAccent,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    ghostButton: {
+      alignItems: 'center',
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      padding: spacing.md,
+    },
+    ghostButtonText: {
+      color: colors.accent,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+  });

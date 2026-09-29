@@ -15,7 +15,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { deleteSymptomLog, getSymptomLogForDate, saveSymptomLog } from '../db/symptoms';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, radius, spacing } from '../theme';
+import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SymptomLog'>;
@@ -34,6 +34,8 @@ const SYMPTOM_OPTIONS: { value: SymptomTag; label: string }[] = [
 const MOOD_OPTIONS = ['good', 'even', 'low', 'irritable', 'anxious'];
 
 export function SymptomLogScreen({ navigation, route }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const requestedDate = route.params?.date;
   const [date, setDate] = useState(() =>
     requestedDate === undefined ? new Date() : fromIsoDate(requestedDate)
@@ -161,88 +163,88 @@ export function SymptomLogScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flexGrow: 1,
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  intro: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  sectionLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    marginTop: spacing.sm,
-    textTransform: 'uppercase',
-  },
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  chip: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  chipSelected: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
-  chipText: {
-    color: colors.text,
-    fontSize: 14,
-  },
-  chipTextSelected: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: 16,
-    padding: spacing.md,
-  },
-  saveButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    marginTop: spacing.md,
-    padding: spacing.md,
-  },
-  saveButtonText: {
-    color: colors.onAccent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  clearButton: {
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  clearButtonText: {
-    color: colors.accent,
-    fontSize: 15,
-  },
-  historyLink: {
-    alignSelf: 'flex-start',
-  },
-  historyLinkText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    intro: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    sectionLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      marginTop: spacing.sm,
+      textTransform: 'uppercase',
+    },
+    chipWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    chip: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    chipSelected: {
+      backgroundColor: colors.accentSoft,
+      borderColor: colors.accent,
+    },
+    chipText: {
+      color: colors.text,
+      fontSize: 14,
+    },
+    chipTextSelected: {
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      color: colors.text,
+      fontSize: 16,
+      padding: spacing.md,
+    },
+    saveButton: {
+      alignItems: 'center',
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      marginTop: spacing.md,
+      padding: spacing.md,
+    },
+    saveButtonText: {
+      color: colors.onAccent,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    clearButton: {
+      alignItems: 'center',
+      padding: spacing.md,
+    },
+    clearButtonText: {
+      color: colors.accent,
+      fontSize: 15,
+    },
+    historyLink: {
+      alignSelf: 'flex-start',
+    },
+    historyLinkText: {
+      color: colors.accent,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+  });
