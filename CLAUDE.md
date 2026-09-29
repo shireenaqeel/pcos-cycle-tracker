@@ -31,12 +31,24 @@ Already built and working — do not redo this, extend it:
   phenotype).
 - `mobile/src/engine/stats.ts`, `predictor.ts` — a **working, real**
   implementation of the Phase 1 prediction engine (see below). Not a stub.
-- `mobile/App.tsx` — native-stack navigator over the four MVP screens,
-  gated on an initial `getOrCreateProfile()` load.
-- `mobile/src/navigation/types.ts` — `RootStackParamList` for typed routes.
+- `mobile/App.tsx` — a root native-stack holding `Onboarding` and `Main`,
+  where `Main` is a bottom-tab navigator (Today · Calendar · Your numbers ·
+  Learn). Logging screens are pushed over the tabs, the three quick-entry
+  ones as modals. Settings is a header button on every tab. Gated on an
+  initial `getOrCreateProfile()` load.
+- `mobile/src/navigation/types.ts` — `RootStackParamList` and
+  `MainTabParamList`. Tab screens type their props with
+  `CompositeScreenProps` so they can navigate into the root stack; a tab
+  screen typed with only `BottomTabScreenProps` cannot.
+- `mobile/src/components/MonthCalendar.tsx` — the month view: period days
+  filled, predicted days dashed, symptom days dotted, today ringed.
+- `mobile/src/lib/cycleDays.ts` — turns cycles, symptoms and a prediction
+  into the date sets the calendar paints, plus the current cycle day.
 - `mobile/src/screens/` — `OnboardingScreen`, `HomeScreen`, `BackfillScreen`,
   `LogCycleScreen`, `CycleDetailScreen`, `SymptomLogScreen`,
-  `SymptomHistoryScreen`, `InsightsScreen`, `LearnScreen`, `AccuracyScreen`.
+  `SymptomHistoryScreen`, `InsightsScreen`, `LearnScreen`, `AccuracyScreen`,
+  `TodayScreen`, `CalendarScreen`, `DayDetailScreen`, `SettingsScreen`.
+  (`HomeScreen` was replaced by `TodayScreen` and deleted.)
 - `mobile/src/db/symptoms.ts`, `predictions.ts` — access for
   `daily_symptom_log` and `prediction_snapshot`.
 - `mobile/src/engine/accuracy.ts` — scores stored predictions against what
@@ -420,6 +432,32 @@ trace to one root: `uuid`'s missing buffer bounds check, reached via
 build tooling, not code that ships to the device, and `npm audit fix --force`
 would break the SDK 57 pin. It clears when Expo bumps the dependency.
 
+## App flow
+
+Modelled on how mainstream period trackers are laid out, because the
+conventions are what people already know:
+
+- **Onboarding** is three steps — what the app is, cycle pattern, then *when
+  your last period started*. That third step is the one that matters: it
+  means the app opens with a real prediction instead of an empty state, which
+  was the single biggest thing making it feel unfinished. The date is stored
+  as `backfilled`, since it's remembered at sign-up, not logged live.
+- **Today** is the hero: cycle day, a plain-language line ("Next period
+  expected in 6 days"), the window with its confidence, what the prediction
+  is based on, and recent periods.
+- **Calendar** is the centrepiece a tracker is judged on. Tapping any day
+  opens `DayDetail`, which shows what's recorded and offers the two actions
+  that make sense for that date — so logging no longer means hunting for a
+  screen.
+- **Your numbers** holds the descriptive stats and links out to track record
+  and symptom history.
+- **Settings** exists mainly so phenotype is changeable after onboarding,
+  which it previously never was.
+
+`predictNextCycle` is only called when at least one cycle exists; with none,
+`buildCycleCalendar` gets `null` and the calendar simply paints no predicted
+window, rather than inventing one anchored to today.
+
 ## Keep the app and the education content honest about each other
 
 The "Making your tracking useful at an appointment" article used to promise
@@ -439,8 +477,10 @@ side changes, change the other in the same commit.
   history, and there's no artifact to hand a clinician.
 - **A standalone build (EAS)** — the app currently runs only while a dev
   server serves it, which blocks real day-to-day use.
-- Changing phenotype after onboarding (no settings screen at all), default
-  Expo icons, and no accessibility labels or dynamic-type handling.
+- Default Expo app icons, and no accessibility labels or dynamic-type
+  handling.
+- Nothing shows *predicted* period days beyond the next window, so the
+  calendar looks empty when you page months ahead.
 
 ## Open questions / pending decisions
 

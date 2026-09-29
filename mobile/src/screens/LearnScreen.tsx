@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { contentForPhenotype } from '../content';
 import { getOrCreateProfile } from '../db/profile';
-import type { RootStackParamList } from '../navigation/types';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { colors, radius, spacing } from '../theme';
 import type { EducationContent, Phenotype } from '../types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Learn'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export function LearnScreen(_props: Props) {
   const [phenotype, setPhenotype] = useState<Phenotype | null>(null);

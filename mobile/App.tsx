@@ -1,26 +1,75 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
 import { getOrCreateProfile } from './src/db/profile';
-import type { RootStackParamList } from './src/navigation/types';
+import type { MainTabParamList, RootStackParamList } from './src/navigation/types';
 import { AccuracyScreen } from './src/screens/AccuracyScreen';
 import { BackfillScreen } from './src/screens/BackfillScreen';
+import { CalendarScreen } from './src/screens/CalendarScreen';
 import { CycleDetailScreen } from './src/screens/CycleDetailScreen';
+import { DayDetailScreen } from './src/screens/DayDetailScreen';
 import { InsightsScreen } from './src/screens/InsightsScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
-import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
-import { SymptomLogScreen } from './src/screens/SymptomLogScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
 import { LogCycleScreen } from './src/screens/LogCycleScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
+import { SymptomLogScreen } from './src/screens/SymptomLogScreen';
+import { TodayScreen } from './src/screens/TodayScreen';
 import { colors } from './src/theme';
 import type { UserProfile } from './src/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tabs = createBottomTabNavigator<MainTabParamList>();
+
+const TAB_ICONS: Record<keyof MainTabParamList, keyof typeof Ionicons.glyphMap> = {
+  Today: 'today-outline',
+  Calendar: 'calendar-outline',
+  Insights: 'stats-chart-outline',
+  Learn: 'book-outline',
+};
+
+function MainTabs() {
+  return (
+    <Tabs.Navigator
+      screenOptions={({ route, navigation }) => ({
+        headerStyle: { backgroundColor: colors.background },
+        headerShadowVisible: false,
+        headerTitleStyle: { color: colors.text },
+        headerRight: () => (
+          <Pressable
+            hitSlop={12}
+            style={{ paddingHorizontal: 16 }}
+            onPress={() => navigation.getParent()?.navigate('Settings')}
+          >
+            <Ionicons name="settings-outline" size={20} color={colors.accent} />
+          </Pressable>
+        ),
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textFaint,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
+        ),
+      })}
+    >
+      <Tabs.Screen name="Today" component={TodayScreen} options={{ title: 'Today' }} />
+      <Tabs.Screen name="Calendar" component={CalendarScreen} options={{ title: 'Calendar' }} />
+      <Tabs.Screen
+        name="Insights"
+        component={InsightsScreen}
+        options={{ title: 'Your numbers' }}
+      />
+      <Tabs.Screen name="Learn" component={LearnScreen} options={{ title: 'Learn' }} />
+    </Tabs.Navigator>
+  );
+}
 
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -31,7 +80,14 @@ export default function App() {
 
   if (profile === null) {
     return (
-      <View style={{ alignItems: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center' }}>
+      <View
+        style={{
+          alignItems: 'center',
+          backgroundColor: colors.background,
+          flex: 1,
+          justifyContent: 'center',
+        }}
+      >
         <ActivityIndicator color={colors.accent} />
       </View>
     );
@@ -43,7 +99,7 @@ export default function App() {
         <Stack.Navigator
           // A null phenotype means onboarding has never run; 'unknown' means it ran and
           // the answer was "not sure", which is an answer, not a reason to ask again.
-          initialRouteName={profile.phenotype === null ? 'Onboarding' : 'Home'}
+          initialRouteName={profile.phenotype === null ? 'Onboarding' : 'Main'}
           screenOptions={{
             contentStyle: { backgroundColor: colors.background },
             headerShadowVisible: false,
@@ -57,26 +113,27 @@ export default function App() {
             component={OnboardingScreen}
             options={{ headerShown: false }}
           />
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Your cycle' }} />
-          <Stack.Screen
-            name="Backfill"
-            component={BackfillScreen}
-            options={{ title: 'Past cycles' }}
-          />
+          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
           <Stack.Screen
             name="LogCycle"
             component={LogCycleScreen}
-            options={{ title: 'Log a cycle' }}
+            options={{ title: 'Log a period', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="Backfill"
+            component={BackfillScreen}
+            options={{ title: 'Past cycles', presentation: 'modal' }}
           />
           <Stack.Screen
             name="CycleDetail"
             component={CycleDetailScreen}
-            options={{ title: 'Edit cycle' }}
+            options={{ title: 'Edit period' }}
           />
+          <Stack.Screen name="DayDetail" component={DayDetailScreen} options={{ title: 'Day' }} />
           <Stack.Screen
             name="SymptomLog"
             component={SymptomLogScreen}
-            options={{ title: 'Symptoms' }}
+            options={{ title: 'Symptoms', presentation: 'modal' }}
           />
           <Stack.Screen
             name="SymptomHistory"
@@ -84,16 +141,11 @@ export default function App() {
             options={{ title: 'Symptom history' }}
           />
           <Stack.Screen
-            name="Insights"
-            component={InsightsScreen}
-            options={{ title: 'Your numbers' }}
-          />
-          <Stack.Screen name="Learn" component={LearnScreen} options={{ title: 'Learn' }} />
-          <Stack.Screen
             name="Accuracy"
             component={AccuracyScreen}
             options={{ title: 'Track record' }}
           />
+          <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="auto" />

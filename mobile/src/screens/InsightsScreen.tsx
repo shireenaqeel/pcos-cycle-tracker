@@ -1,22 +1,36 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
-import type { RootStackParamList } from '../navigation/types';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { colors, radius, spacing } from '../theme';
 import type { CycleLog } from '../types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Insights'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Insights'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
-export function InsightsScreen(_props: Props) {
+export function InsightsScreen({ navigation }: Props) {
   const [cycles, setCycles] = useState<CycleLog[] | null>(null);
 
-  useEffect(() => {
-    listCycleLogs(LOCAL_USER_ID).then(setCycles);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      listCycleLogs(LOCAL_USER_ID).then((loaded) => {
+        if (active) setCycles(loaded);
+      });
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   if (cycles === null) {
     return (
@@ -99,6 +113,31 @@ export function InsightsScreen(_props: Props) {
           weights them less.
         </Text>
       </View>
+
+      <Pressable
+        style={({ pressed }) => [styles.linkCard, pressed && styles.linkCardPressed]}
+        onPress={() => navigation.navigate('Accuracy')}
+      >
+        <View style={styles.linkTextGroup}>
+          <Text style={styles.linkTitle}>Track record</Text>
+          <Text style={styles.linkBody}>
+            How often the predicted window was actually right, next to how confident it claimed to
+            be.
+          </Text>
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [styles.linkCard, pressed && styles.linkCardPressed]}
+        onPress={() => navigation.navigate('SymptomHistory')}
+      >
+        <View style={styles.linkTextGroup}>
+          <Text style={styles.linkTitle}>Symptom history</Text>
+          <Text style={styles.linkBody}>Every day you've recorded, newest first.</Text>
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -174,5 +213,36 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
+  },
+  linkCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  linkCardPressed: {
+    backgroundColor: colors.accentSoft,
+  },
+  linkTextGroup: {
+    flex: 1,
+    gap: 2,
+  },
+  linkTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  linkBody: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  chevron: {
+    color: colors.accent,
+    fontSize: 22,
   },
 });
