@@ -7,7 +7,7 @@ import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile, setPhenotype } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
@@ -140,7 +140,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
     },
     cardBody: {
@@ -166,7 +166,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     optionLabelSelected: {
       color: colors.accent,
-      fontWeight: '700',
+      fontFamily: fonts.bodyBold,
     },
     row: {
       flexDirection: 'row',
@@ -178,7 +178,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     rowValue: {
       ...typography.bodySmall,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.text,
     },
     note: {

@@ -1,5 +1,5 @@
 import { getDb } from './client';
-import type { DailySymptomLog, SymptomTag } from '../types';
+import type { DailySymptomLog, MovementLevel, SymptomTag } from '../types';
 
 interface DailySymptomLogRow {
   id: string;
@@ -8,6 +8,12 @@ interface DailySymptomLogRow {
   symptom_tags: string;
   basal_temp: number | null;
   mood: string | null;
+  stress_level: number | null;
+  hydration_glasses: number | null;
+  sleep_hours: number | null;
+  movement: string | null;
+  food_note: string | null;
+  other_note: string | null;
 }
 
 /** Derived from user and date so a day can only ever hold one entry. */
@@ -23,6 +29,12 @@ function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
     symptomTags: JSON.parse(row.symptom_tags) as SymptomTag[],
     basalTemp: row.basal_temp,
     mood: row.mood,
+    stressLevel: row.stress_level,
+    hydrationGlasses: row.hydration_glasses,
+    sleepHours: row.sleep_hours,
+    movement: row.movement as MovementLevel | null,
+    foodNote: row.food_note,
+    otherNote: row.other_note,
   };
 }
 
@@ -54,17 +66,31 @@ export async function saveSymptomLog(input: {
   symptomTags: SymptomTag[];
   basalTemp: number | null;
   mood: string | null;
+  stressLevel: number | null;
+  hydrationGlasses: number | null;
+  sleepHours: number | null;
+  movement: MovementLevel | null;
+  foodNote: string | null;
+  otherNote: string | null;
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    `INSERT OR REPLACE INTO daily_symptom_log (id, user_id, date, symptom_tags, basal_temp, mood)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR REPLACE INTO daily_symptom_log
+       (id, user_id, date, symptom_tags, basal_temp, mood,
+        stress_level, hydration_glasses, sleep_hours, movement, food_note, other_note)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     symptomLogId(input.userId, input.date),
     input.userId,
     input.date,
     JSON.stringify(input.symptomTags),
     input.basalTemp,
-    input.mood
+    input.mood,
+    input.stressLevel,
+    input.hydrationGlasses,
+    input.sleepHours,
+    input.movement,
+    input.foodNote,
+    input.otherNote
   );
 }
 

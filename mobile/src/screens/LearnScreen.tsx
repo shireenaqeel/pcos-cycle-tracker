@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { contentForPhenotype } from '../content';
 import { getOrCreateProfile } from '../db/profile';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
 import type { EducationContent, Phenotype } from '../types';
 
 type Props = CompositeScreenProps<
@@ -100,7 +100,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     toggle: {
       ...typography.caption,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.accent,
       marginTop: spacing.xs,
     },
@@ -113,7 +113,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       color: colors.text,
     },
     sourcesLabel: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
       marginTop: spacing.sm,
     },

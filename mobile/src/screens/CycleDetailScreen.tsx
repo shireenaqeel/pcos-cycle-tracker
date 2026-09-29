@@ -15,7 +15,7 @@ import { DateGrid } from '../components/DateGrid';
 import { deleteCycleLog, getCycleLog, updateCycleLog } from '../db/cycles';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CycleDetail'>;
@@ -182,7 +182,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     sectionLabel: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
       marginTop: spacing.sm,
     },
@@ -196,7 +196,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     ghostButtonText: {
       ...typography.body,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.accent,
     },
     flowRow: {
@@ -222,7 +222,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     flowOptionTextSelected: {
       color: colors.accent,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
     },
     saveButton: {
       alignItems: 'center',

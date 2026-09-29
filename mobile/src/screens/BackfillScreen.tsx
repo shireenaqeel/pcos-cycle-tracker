@@ -122,7 +122,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     listTitle: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
       marginBottom: spacing.sm,
     },

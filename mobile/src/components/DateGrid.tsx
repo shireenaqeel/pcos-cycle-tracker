@@ -15,7 +15,7 @@ import {
   subMonths,
 } from 'date-fns';
 
-import { radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   value: Date;
@@ -160,6 +160,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     cellTextSelected: {
       color: colors.onAccent,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
     },
   });

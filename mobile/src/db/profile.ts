@@ -8,6 +8,7 @@ interface UserProfileRow {
   phenotype: string | null;
   self_reported_dx: number;
   created_at: string;
+  display_name: string | null;
 }
 
 function rowToProfile(row: UserProfileRow): UserProfile {
@@ -16,6 +17,7 @@ function rowToProfile(row: UserProfileRow): UserProfile {
     phenotype: row.phenotype as Phenotype | null,
     selfReportedDx: row.self_reported_dx === 1,
     createdAt: row.created_at,
+    displayName: row.display_name,
   };
 }
 
@@ -33,12 +35,27 @@ export async function getOrCreateProfile(): Promise<UserProfile> {
     LOCAL_USER_ID,
     createdAt
   );
-  return { id: LOCAL_USER_ID, phenotype: null, selfReportedDx: false, createdAt };
+  return {
+    id: LOCAL_USER_ID,
+    phenotype: null,
+    selfReportedDx: false,
+    createdAt,
+    displayName: null,
+  };
 }
 
 export async function setPhenotype(phenotype: Phenotype): Promise<void> {
   const db = await getDb();
   await db.runAsync(`UPDATE user_profile SET phenotype = ? WHERE id = ?`, phenotype, LOCAL_USER_ID);
+}
+
+export async function setDisplayName(displayName: string | null): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `UPDATE user_profile SET display_name = ? WHERE id = ?`,
+    displayName === null || displayName.trim() === '' ? null : displayName.trim(),
+    LOCAL_USER_ID
+  );
 }
 
 export { LOCAL_USER_ID };

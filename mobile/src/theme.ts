@@ -11,32 +11,51 @@ export interface ThemeColors {
   accent: string;
   accentSoft: string;
   onAccent: string;
+  /** Category tints for check-in tiles, so each thing you log has its own colour. */
+  petal: string;
+  sage: string;
+  apricot: string;
+  lilac: string;
+  gradientFrom: string;
+  gradientTo: string;
 }
 
 const lightColors: ThemeColors = {
-  background: '#FBF7F9',
+  background: '#FDF6F3',
   surface: '#FFFFFF',
-  border: '#EADFE4',
-  text: '#241B20',
-  textMuted: '#7B6B73',
-  textFaint: '#B6A7AE',
-  accent: '#A63D62',
-  accentSoft: '#F6E7ED',
+  border: '#F0E2DD',
+  text: '#33242B',
+  textMuted: '#8A7078',
+  textFaint: '#BFA9AF',
+  accent: '#C4577B',
+  accentSoft: '#FBE8EC',
   onAccent: '#FFFFFF',
+  petal: '#F7C9CF',
+  sage: '#BFD3C1',
+  apricot: '#F6D6B8',
+  lilac: '#D8CDEB',
+  gradientFrom: '#FCE4E6',
+  gradientTo: '#EFE2F3',
 };
 
 const darkColors: ThemeColors = {
-  background: '#141014',
-  surface: '#1E181D',
-  border: '#352B32',
-  text: '#F4ECF0',
-  textMuted: '#B4A3AD',
-  textFaint: '#776871',
+  background: '#171216',
+  surface: '#221A20',
+  border: '#392D35',
+  text: '#F6EDF0',
+  textMuted: '#B6A2AB',
+  textFaint: '#7C6A73',
   // Lightened so it carries contrast against a dark ground; the light accent
   // would read as muddy here.
-  accent: '#EB8FB1',
-  accentSoft: '#3B2630',
+  accent: '#F0A0BC',
+  accentSoft: '#3D2A33',
   onAccent: '#24121B',
+  petal: '#6B4450',
+  sage: '#4C6151',
+  apricot: '#6E523C',
+  lilac: '#544A6B',
+  gradientFrom: '#31212A',
+  gradientTo: '#272036',
 };
 
 export function useThemeColors(): ThemeColors {
@@ -57,30 +76,42 @@ export function useThemedStyles<T>(factory: (colors: ThemeColors) => T): T {
  * `{ ...typography.body, color: colors.text }` and override weight only where a
  * specific instance genuinely differs.
  */
+/**
+ * Quicksand carries the headings — geometric but rounded, which is the whole
+ * point of this direction — and Nunito the reading text, where Quicksand's
+ * wide letterforms get tiring. Weights are baked into the family name because
+ * that is how the loaded fonts are addressed; `fontWeight` would silently do
+ * nothing.
+ */
+export const fonts = {
+  displayBold: 'Quicksand_700Bold',
+  displayMedium: 'Quicksand_600SemiBold',
+  body: 'Nunito_400Regular',
+  bodyMedium: 'Nunito_600SemiBold',
+  bodyBold: 'Nunito_700Bold',
+};
+
 export const typography = {
   /** The cycle-day number on Today, and nothing else. */
-  display: { fontSize: 54, fontWeight: '800', lineHeight: 60, letterSpacing: -1 },
+  display: { fontFamily: fonts.displayBold, fontSize: 56, lineHeight: 62, letterSpacing: -1.5 },
   /** Headline figures: a hit rate, a cycle-length range. */
-  metric: { fontSize: 28, fontWeight: '700', lineHeight: 34, letterSpacing: -0.4 },
+  metric: { fontFamily: fonts.displayBold, fontSize: 30, lineHeight: 36, letterSpacing: -0.6 },
   /** Screen-level titles. */
-  title: { fontSize: 24, fontWeight: '700', lineHeight: 30, letterSpacing: -0.3 },
+  title: { fontFamily: fonts.displayBold, fontSize: 25, lineHeight: 32, letterSpacing: -0.4 },
   /** Section headings and the line under the ring. */
-  heading: { fontSize: 18, fontWeight: '700', lineHeight: 24 },
+  heading: { fontFamily: fonts.displayMedium, fontSize: 18, lineHeight: 25 },
   /** Card titles, option labels, button text. */
-  strong: { fontSize: 16, fontWeight: '600', lineHeight: 22 },
-  body: { fontSize: 15, fontWeight: '400', lineHeight: 22 },
-  bodySmall: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
-  caption: { fontSize: 13, fontWeight: '400', lineHeight: 19 },
-  /** Small uppercase label above a card's contents. */
-  overline: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.7,
-    lineHeight: 16,
-    textTransform: 'uppercase',
-  },
+  strong: { fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 23 },
+  body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 23 },
+  bodySmall: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  caption: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19 },
+  /**
+   * Section labels. Sentence case on purpose — a wall of tiny uppercase
+   * headings is the single most generic thing a screen can do.
+   */
+  label: { fontFamily: fonts.bodyMedium, fontSize: 13, lineHeight: 18, letterSpacing: 0.2 },
   /** Footnotes, citations, disclaimers. */
-  micro: { fontSize: 12, fontWeight: '400', lineHeight: 17 },
+  micro: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
 } as const satisfies Record<string, TextStyle>;
 
 export const spacing = {
@@ -92,7 +123,9 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 18,
+  sm: 10,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  pill: 999,
 };

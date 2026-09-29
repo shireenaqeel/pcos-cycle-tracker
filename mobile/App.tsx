@@ -6,11 +6,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
+import { Quicksand_600SemiBold, Quicksand_700Bold } from '@expo-google-fonts/quicksand';
+import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 
 import { getOrCreateProfile } from './src/db/profile';
 import type { MainTabParamList, RootStackParamList } from './src/navigation/types';
 import { AccuracyScreen } from './src/screens/AccuracyScreen';
 import { BackfillScreen } from './src/screens/BackfillScreen';
+import { CheckInScreen } from './src/screens/CheckInScreen';
 import { CalendarScreen } from './src/screens/CalendarScreen';
 import { CycleDetailScreen } from './src/screens/CycleDetailScreen';
 import { DayDetailScreen } from './src/screens/DayDetailScreen';
@@ -20,7 +24,6 @@ import { LogCycleScreen } from './src/screens/LogCycleScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
-import { SymptomLogScreen } from './src/screens/SymptomLogScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
 import { useThemeColors } from './src/theme';
 import type { UserProfile } from './src/types';
@@ -77,12 +80,21 @@ export default function App() {
   const colors = useThemeColors();
   const scheme = useColorScheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [fontsLoaded] = useFonts({
+    Quicksand_600SemiBold,
+    Quicksand_700Bold,
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+  });
 
   useEffect(() => {
     getOrCreateProfile().then(setProfile);
   }, []);
 
-  if (profile === null) {
+  // Rendering before the fonts resolve would flash the system face and reflow
+  // every screen once they land.
+  if (profile === null || !fontsLoaded) {
     return (
       <View
         style={{
@@ -147,14 +159,14 @@ export default function App() {
           />
           <Stack.Screen name="DayDetail" component={DayDetailScreen} options={{ title: 'Day' }} />
           <Stack.Screen
-            name="SymptomLog"
-            component={SymptomLogScreen}
-            options={{ title: 'Symptoms', presentation: 'modal' }}
+            name="CheckIn"
+            component={CheckInScreen}
+            options={{ title: 'Daily check-in', presentation: 'modal' }}
           />
           <Stack.Screen
             name="SymptomHistory"
             component={SymptomHistoryScreen}
-            options={{ title: 'Symptom history' }}
+            options={{ title: 'Your check-ins' }}
           />
           <Stack.Screen
             name="Accuracy"

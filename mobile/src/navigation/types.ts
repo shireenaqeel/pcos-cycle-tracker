@@ -14,7 +14,7 @@ export type RootStackParamList = {
   Backfill: undefined;
   CycleDetail: { cycleId: string };
   DayDetail: { date: string };
-  SymptomLog: { date?: string } | undefined;
+  CheckIn: { date?: string } | undefined;
   SymptomHistory: undefined;
   Accuracy: undefined;
   Settings: undefined;

@@ -107,7 +107,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       width: SIZE,
     },
     dayLabel: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
     },
     dayNumber: {

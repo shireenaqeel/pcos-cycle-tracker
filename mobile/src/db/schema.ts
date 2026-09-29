@@ -1,11 +1,12 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
   id TEXT PRIMARY KEY NOT NULL,
   phenotype TEXT,
   self_reported_dx INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  display_name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS cycle_log (
@@ -24,7 +25,13 @@ CREATE TABLE IF NOT EXISTS daily_symptom_log (
   date TEXT NOT NULL,
   symptom_tags TEXT NOT NULL DEFAULT '[]',
   basal_temp REAL,
-  mood TEXT
+  mood TEXT,
+  stress_level INTEGER,
+  hydration_glasses INTEGER,
+  sleep_hours REAL,
+  movement TEXT,
+  food_note TEXT,
+  other_note TEXT
 );
 
 CREATE TABLE IF NOT EXISTS prediction_snapshot (
@@ -40,3 +47,28 @@ CREATE TABLE IF NOT EXISTS prediction_snapshot (
 CREATE INDEX IF NOT EXISTS idx_cycle_log_user ON cycle_log(user_id, start_date);
 CREATE INDEX IF NOT EXISTS idx_symptom_log_user ON daily_symptom_log(user_id, date);
 `;
+
+/**
+ * Applied in order to any database older than `SCHEMA_VERSION`, tracked by
+ * SQLite's own `PRAGMA user_version`. Every step must be additive: people have
+ * real cycle history on their device, and a destructive migration would throw
+ * away the only copy of it — there is no server backup to restore from.
+ *
+ * A fresh install runs `CREATE_TABLES_SQL` first, which already includes these
+ * columns, so each step also has to tolerate being unnecessary. `ALTER TABLE
+ * ADD COLUMN` throws on a duplicate column, so the runner checks first.
+ */
+export const MIGRATIONS: { toVersion: number; columns: { table: string; column: string; type: string }[] }[] = [
+  {
+    toVersion: 2,
+    columns: [
+      { table: 'user_profile', column: 'display_name', type: 'TEXT' },
+      { table: 'daily_symptom_log', column: 'stress_level', type: 'INTEGER' },
+      { table: 'daily_symptom_log', column: 'hydration_glasses', type: 'INTEGER' },
+      { table: 'daily_symptom_log', column: 'sleep_hours', type: 'REAL' },
+      { table: 'daily_symptom_log', column: 'movement', type: 'TEXT' },
+      { table: 'daily_symptom_log', column: 'food_note', type: 'TEXT' },
+      { table: 'daily_symptom_log', column: 'other_note', type: 'TEXT' },
+    ],
+  },
+];

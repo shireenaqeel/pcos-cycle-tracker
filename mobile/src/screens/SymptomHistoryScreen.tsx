@@ -8,7 +8,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SymptomHistory'>;
@@ -67,7 +67,7 @@ export function SymptomHistoryScreen({ navigation }: Props) {
         <Pressable
           key={entry.id}
           style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-          onPress={() => navigation.navigate('SymptomLog', { date: entry.date })}
+          onPress={() => navigation.navigate('CheckIn', { date: entry.date })}
         >
           <Text style={styles.date}>{format(fromIsoDate(entry.date), 'EEEE, MMM d yyyy')}</Text>
 
@@ -125,7 +125,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     date: {
       ...typography.body,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.text,
     },
     tags: {

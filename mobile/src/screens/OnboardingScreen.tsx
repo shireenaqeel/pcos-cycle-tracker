@@ -1,14 +1,22 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 
 import { DateGrid } from '../components/DateGrid';
 import { insertCycleLog } from '../db/cycles';
-import { LOCAL_USER_ID, setPhenotype } from '../db/profile';
+import { LOCAL_USER_ID, setDisplayName, setPhenotype } from '../db/profile';
 import { toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
@@ -39,7 +47,8 @@ const PHENOTYPE_OPTIONS: { value: Phenotype; label: string; hint: string }[] = [
 export function OnboardingScreen({ navigation }: Props) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
-  const [step, setStep] = useState<'intro' | 'phenotype' | 'lastPeriod'>('intro');
+  const [step, setStep] = useState<'intro' | 'name' | 'phenotype' | 'lastPeriod'>('intro');
+  const [name, setName] = useState('');
   const [chosen, setChosen] = useState<Phenotype | null>(null);
   const [lastPeriod, setLastPeriod] = useState(() => new Date());
   const [busy, setBusy] = useState(false);
@@ -51,6 +60,7 @@ export function OnboardingScreen({ navigation }: Props) {
 
   async function finish(withLastPeriod: boolean) {
     setBusy(true);
+    if (name.trim() !== '') await setDisplayName(name);
     if (chosen !== null) await setPhenotype(chosen);
     if (withLastPeriod) {
       // Remembered at sign-up, so it is backfilled — not something logged as it happened.
@@ -66,8 +76,8 @@ export function OnboardingScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.progress}>
-        {(['intro', 'phenotype', 'lastPeriod'] as const).map((name) => (
-          <View key={name} style={[styles.pip, step === name && styles.pipActive]} />
+        {(['intro', 'name', 'phenotype', 'lastPeriod'] as const).map((stepName) => (
+          <View key={stepName} style={[styles.pip, step === stepName && styles.pipActive]} />
         ))}
       </View>
 
@@ -81,16 +91,44 @@ export function OnboardingScreen({ navigation }: Props) {
           </Text>
           <Text style={styles.paragraph}>
             This one learns from your own history and always shows a window with how likely it is.
-            Two questions and you're done.
+            Three quick questions and you're set.
           </Text>
           <Text style={styles.footnote}>
             It can't detect or diagnose PCOS, and it isn't a substitute for a clinician.
           </Text>
           <Pressable
             style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-            onPress={() => setStep('phenotype')}
+            onPress={() => setStep('name')}
           >
             <Text style={styles.primaryButtonText}>Get started</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {step === 'name' && (
+        <View style={styles.stepBody}>
+          <Text style={styles.title}>What should I call you?</Text>
+          <Text style={styles.paragraph}>
+            Only used to say hello on the home screen. It stays on this phone like everything else,
+            and you can skip it.
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="words"
+            returnKeyType="next"
+            onSubmitEditing={() => setStep('phenotype')}
+          />
+          <Pressable
+            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+            onPress={() => setStep('phenotype')}
+          >
+            <Text style={styles.primaryButtonText}>
+              {name.trim() === '' ? 'Skip for now' : `Nice to meet you, ${name.trim()}`}
+            </Text>
           </Pressable>
         </View>
       )}
@@ -203,6 +241,15 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       ...typography.caption,
       color: colors.textMuted,
     },
+    input: {
+      ...typography.body,
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      color: colors.text,
+      padding: spacing.md,
+    },
     primaryButton: {
       alignItems: 'center',
       backgroundColor: colors.accent,
@@ -211,7 +258,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     primaryButtonText: {
       ...typography.strong,
-      fontWeight: '700',
+      fontFamily: fonts.bodyBold,
       color: colors.onAccent,
     },
     pressed: {
@@ -223,7 +270,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     skipButtonText: {
       ...typography.bodySmall,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.accent,
     },
   });

@@ -9,7 +9,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { getSymptomLogForDate } from '../db/symptoms';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DayDetail'>;
@@ -140,7 +140,7 @@ export function DayDetailScreen({ navigation, route }: Props) {
         )}
         <Pressable
           style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
-          onPress={() => navigation.navigate('SymptomLog', { date })}
+          onPress={() => navigation.navigate('CheckIn', { date })}
         >
           <Text style={styles.ghostButtonText}>
             {symptoms === null ? 'Log symptoms for this day' : 'Change what you recorded'}
@@ -178,7 +178,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
     },
     cardBody: {
@@ -201,7 +201,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     buttonText: {
       ...typography.body,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.onAccent,
     },
     ghostButton: {
@@ -213,7 +213,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     ghostButtonText: {
       ...typography.bodySmall,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.accent,
     },
     pressed: {

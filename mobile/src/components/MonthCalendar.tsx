@@ -17,7 +17,7 @@ import {
 
 import { toIsoDate } from '../lib/dates';
 import type { CycleCalendar } from '../lib/cycleDays';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   calendar: CycleCalendar;
@@ -246,7 +246,7 @@ const makeStyles = (colors: ThemeColors) =>
     },
     dayTextPeriod: {
       color: colors.onAccent,
-      fontWeight: '700',
+      fontFamily: fonts.bodyBold,
     },
     symptomDot: {
       borderRadius: 999,

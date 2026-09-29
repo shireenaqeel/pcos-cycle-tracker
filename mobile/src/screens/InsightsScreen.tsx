@@ -7,10 +7,23 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
+import { listSymptomLogs } from '../db/symptoms';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
+import { phaseInsights, type PhaseInsights } from '../engine/phases';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
-import type { CycleLog } from '../types';
+import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import type { CycleLog, SymptomTag } from '../types';
+
+const TAG_LABELS: Record<SymptomTag, string> = {
+  cramps: 'Cramps',
+  fatigue: 'Fatigue',
+  cravings: 'Cravings',
+  mood_swing: 'Mood swings',
+  acne: 'Acne',
+  hair_thinning: 'Hair thinning',
+  hirsutism: 'Excess hair growth',
+  ovulation_pain: 'Ovulation pain',
+};
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Insights'>,
@@ -21,13 +34,20 @@ export function InsightsScreen({ navigation }: Props) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
   const [cycles, setCycles] = useState<CycleLog[] | null>(null);
+  const [phases, setPhases] = useState<PhaseInsights | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      listCycleLogs(LOCAL_USER_ID).then((loaded) => {
-        if (active) setCycles(loaded);
-      });
+      (async () => {
+        const [loadedCycles, symptoms] = await Promise.all([
+          listCycleLogs(LOCAL_USER_ID),
+          listSymptomLogs(LOCAL_USER_ID),
+        ]);
+        if (!active) return;
+        setCycles(loadedCycles);
+        setPhases(phaseInsights(loadedCycles, symptoms));
+      })();
       return () => {
         active = false;
       };
@@ -116,6 +136,58 @@ export function InsightsScreen({ navigation }: Props) {
         </Text>
       </View>
 
+      {phases !== null && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Before your period</Text>
+          {!phases.hasEnoughData ? (
+            <Text style={styles.empty}>
+              Not enough check-ins yet to compare the days before your period with the rest of your
+              cycle. A few more logged days and this fills in — anything sooner would be noise with
+              a percentage sign on it.
+            </Text>
+          ) : (
+            <>
+              {phases.clustered.length === 0 ? (
+                <Text style={styles.empty}>
+                  Nothing you've logged shows up more in the five days before your period than
+                  during the rest of your cycle.
+                </Text>
+              ) : (
+                <>
+                  <Text style={styles.cardBody}>
+                    In the five days before a period, compared with the rest of your cycle:
+                  </Text>
+                  {phases.clustered.slice(0, 4).map((pattern) => (
+                    <Stat
+                      key={pattern.tag}
+                      label={TAG_LABELS[pattern.tag]}
+                      value={`${Math.round(pattern.premenstrualRate * 100)}% vs ${Math.round(
+                        pattern.restOfCycleRate * 100
+                      )}%`}
+                    />
+                  ))}
+                </>
+              )}
+
+              {phases.averageStressPremenstrual !== null &&
+                phases.averageStressRestOfCycle !== null && (
+                  <Stat
+                    label="Average stress"
+                    value={`${phases.averageStressPremenstrual.toFixed(1)} vs ${phases.averageStressRestOfCycle.toFixed(1)} of 5`}
+                  />
+                )}
+
+              <Text style={styles.note}>
+                Counted from {phases.premenstrualDays} premenstrual{' '}
+                {phases.premenstrualDays === 1 ? 'day' : 'days'} and {phases.restOfCycleDays} other{' '}
+                {phases.restOfCycleDays === 1 ? 'day' : 'days'}. These are your own tallies, not a
+                finding — a handful of days can swing them a long way.
+              </Text>
+            </>
+          )}
+        </View>
+      )}
+
       <Pressable
         style={({ pressed }) => [styles.linkCard, pressed && styles.linkCardPressed]}
         onPress={() => navigation.navigate('Accuracy')}
@@ -180,7 +252,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
-      ...typography.overline,
+      ...typography.label,
       color: colors.textMuted,
     },
     big: {
@@ -199,13 +271,17 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     statValue: {
       ...typography.bodySmall,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.text,
     },
     note: {
       ...typography.micro,
       color: colors.textFaint,
       marginTop: spacing.xs,
+    },
+    cardBody: {
+      ...typography.bodySmall,
+      color: colors.text,
     },
     empty: {
       ...typography.bodySmall,
@@ -230,7 +306,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     linkTitle: {
       ...typography.body,
-      fontWeight: '600',
+      fontFamily: fonts.bodyMedium,
       color: colors.text,
     },
     linkBody: {

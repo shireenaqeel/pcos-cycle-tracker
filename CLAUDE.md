@@ -582,3 +582,55 @@ Command Line Tools only — no simulator, no Android SDK — and Expo web would
 have required adding `react-dom` / `react-native-web`, which is out of scope
 for a mobile-only MVP. First run on a real device or simulator is still an
 open verification step.
+
+## Daily check-in — what's tracked and what it does not do
+
+`CheckInScreen` (route `CheckIn`, formerly `SymptomLog`) records mood, stress
+1-5, hydration, sleep, movement, symptoms, a food note and a free-text note
+for anything else going on. Everything past the date is optional: a day where
+someone taps one mood is a valid entry, and demanding more would just mean
+fewer days recorded.
+
+**None of it feeds the prediction**, and the screen says so outright. Inferring
+cycle timing from stress, food or hydration would be inventing a model nobody
+validated. What these enable is `engine/phases.ts` — descriptive counting of
+how often each symptom appears in the five days before a recorded period
+versus the rest of the cycle, shown on Your numbers. It stays silent until
+there are at least two measured cycles and three logged days on each side,
+because below that it is noise with a percentage sign on it. A day is only
+counted as premenstrual when a period start was *actually recorded* after it;
+the label is hindsight.
+
+Diet is recorded, never advised. PCOS nutrition guidance needs real sources,
+and generated meal tips are exactly the kind of thing this app must not ship.
+
+## Schema migrations
+
+`PRAGMA user_version` tracks the database version; `client.ts` applies any
+`MIGRATIONS` newer than it on open. **Every step must be additive.** People
+have real cycle history on the device and there is no server backup — a
+destructive migration throws away the only copy. `CREATE_TABLES_SQL` already
+contains the current columns for fresh installs, so each step checks
+`PRAGMA table_info` before adding, since `ALTER TABLE ADD COLUMN` throws on a
+duplicate.
+
+## The visual language
+
+Soft and organic, chosen deliberately over the default look:
+
+- **Real fonts do most of the work.** Quicksand for headings, Nunito for
+  reading text, loaded in `App.tsx` before anything renders. The system font is
+  the single biggest tell that no one designed a screen. Weights live in the
+  family name — `fontWeight` silently does nothing with these faces, which is
+  why `typography` sets `fontFamily` per role.
+- `components/Soft.tsx` holds the kit: `SoftCard` (tintable, borderless),
+  `Chip`, `Stepper`, `ScaleDots`, `Blob` (a hand-tuned bezier, so something in
+  the app isn't a rounded rectangle) and `Squish`, which dips a surface 4% on
+  press.
+- Check-in sections carry their own tint (`petal`, `sage`, `apricot`, `lilac`)
+  rather than being another row of white boxes.
+- Haptics via `lib/feedback.ts`, fire-and-forget: web has no API and a
+  simulator has no motor, so a failure must never surface to someone logging
+  their day.
+- Section labels are sentence case. A wall of tiny uppercase headings is the
+  most generic thing a screen can do.
