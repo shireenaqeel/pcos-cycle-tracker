@@ -7,7 +7,7 @@ import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile, setPhenotype } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
@@ -140,15 +140,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
     },
     cardBody: {
+      ...typography.bodySmall,
       color: colors.text,
-      fontSize: 14,
-      lineHeight: 20,
     },
     options: {
       gap: spacing.sm,
@@ -164,8 +161,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       borderColor: colors.accent,
     },
     optionLabel: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     optionLabelSelected: {
       color: colors.accent,
@@ -176,17 +173,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       justifyContent: 'space-between',
     },
     rowLabel: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
     },
     rowValue: {
-      color: colors.text,
-      fontSize: 14,
+      ...typography.bodySmall,
       fontWeight: '600',
+      color: colors.text,
     },
     note: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
-      lineHeight: 17,
     },
   });

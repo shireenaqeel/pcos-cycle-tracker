@@ -8,7 +8,7 @@ import { insertCycleLog, listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Backfill'>;
@@ -95,9 +95,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     intro: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
     },
     addButton: {
       alignItems: 'center',
@@ -112,9 +111,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       backgroundColor: colors.textFaint,
     },
     addButtonText: {
+      ...typography.strong,
       color: colors.onAccent,
-      fontSize: 16,
-      fontWeight: '600',
     },
     list: {
       backgroundColor: colors.surface,
@@ -124,11 +122,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     listTitle: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
       marginBottom: spacing.sm,
-      textTransform: 'uppercase',
     },
     listRow: {
       alignItems: 'center',
@@ -137,20 +133,19 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       paddingVertical: spacing.xs,
     },
     listDate: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     listSource: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
     },
     doneButton: {
       alignItems: 'center',
       padding: spacing.md,
     },
     doneButtonText: {
+      ...typography.strong,
       color: colors.accent,
-      fontSize: 16,
-      fontWeight: '600',
     },
   });

@@ -15,7 +15,7 @@ import { DateGrid } from '../components/DateGrid';
 import { deleteCycleLog, getCycleLog, updateCycleLog } from '../db/cycles';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CycleDetail'>;
@@ -175,19 +175,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       gap: spacing.sm,
     },
     provenance: {
+      ...typography.caption,
       backgroundColor: colors.accentSoft,
       borderRadius: radius.md,
       color: colors.text,
-      fontSize: 13,
-      lineHeight: 19,
       padding: spacing.md,
     },
     sectionLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
       marginTop: spacing.sm,
-      textTransform: 'uppercase',
     },
     ghostButton: {
       alignItems: 'center',
@@ -198,9 +195,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     ghostButtonText: {
-      color: colors.accent,
-      fontSize: 15,
+      ...typography.body,
       fontWeight: '600',
+      color: colors.accent,
     },
     flowRow: {
       flexDirection: 'row',
@@ -220,8 +217,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       borderColor: colors.accent,
     },
     flowOptionText: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     flowOptionTextSelected: {
       color: colors.accent,
@@ -235,9 +232,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     saveButtonText: {
+      ...typography.strong,
       color: colors.onAccent,
-      fontSize: 16,
-      fontWeight: '600',
     },
     pressed: {
       opacity: 0.85,
@@ -247,12 +243,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     deleteButtonText: {
+      ...typography.body,
       color: colors.accent,
-      fontSize: 15,
     },
     footnote: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
       textAlign: 'center',
     },
   });

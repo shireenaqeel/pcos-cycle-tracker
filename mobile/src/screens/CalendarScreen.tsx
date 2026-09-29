@@ -13,7 +13,7 @@ import { predictNextCycle } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { toIsoDate } from '../lib/dates';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Calendar'>,
@@ -80,8 +80,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     hint: {
+      ...typography.caption,
       color: colors.textMuted,
-      fontSize: 13,
-      lineHeight: 19,
     },
   });

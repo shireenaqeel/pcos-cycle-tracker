@@ -8,7 +8,7 @@ import { insertCycleLog } from '../db/cycles';
 import { LOCAL_USER_ID, setPhenotype } from '../db/profile';
 import { toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
@@ -170,20 +170,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       gap: spacing.md,
     },
     title: {
+      ...typography.title,
       color: colors.text,
-      fontSize: 25,
-      fontWeight: '700',
-      lineHeight: 32,
     },
     paragraph: {
+      ...typography.body,
       color: colors.textMuted,
-      fontSize: 15,
-      lineHeight: 22,
     },
     footnote: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
-      lineHeight: 17,
     },
     options: {
       gap: spacing.sm,
@@ -200,14 +196,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       backgroundColor: colors.accentSoft,
     },
     optionLabel: {
+      ...typography.strong,
       color: colors.text,
-      fontSize: 17,
-      fontWeight: '600',
     },
     optionHint: {
+      ...typography.caption,
       color: colors.textMuted,
-      fontSize: 13,
-      lineHeight: 18,
     },
     primaryButton: {
       alignItems: 'center',
@@ -216,9 +210,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     primaryButtonText: {
-      color: colors.onAccent,
-      fontSize: 16,
+      ...typography.strong,
       fontWeight: '700',
+      color: colors.onAccent,
     },
     pressed: {
       opacity: 0.85,
@@ -228,8 +222,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.sm,
     },
     skipButtonText: {
-      color: colors.accent,
-      fontSize: 14,
+      ...typography.bodySmall,
       fontWeight: '600',
+      color: colors.accent,
     },
   });

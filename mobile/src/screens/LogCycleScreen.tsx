@@ -8,7 +8,7 @@ import { insertCycleLog } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LogCycle'>;
@@ -109,11 +109,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       gap: spacing.sm,
     },
     sectionLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
       marginTop: spacing.sm,
-      textTransform: 'uppercase',
     },
     ghostButton: {
       alignItems: 'center',
@@ -124,9 +122,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     ghostButtonText: {
-      color: colors.accent,
-      fontSize: 15,
+      ...typography.body,
       fontWeight: '600',
+      color: colors.accent,
     },
     flowRow: {
       flexDirection: 'row',
@@ -146,8 +144,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       borderColor: colors.accent,
     },
     flowOptionText: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     flowOptionTextSelected: {
       color: colors.accent,
@@ -164,8 +162,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       opacity: 0.85,
     },
     saveButtonText: {
+      ...typography.strong,
       color: colors.onAccent,
-      fontSize: 16,
-      fontWeight: '600',
     },
   });

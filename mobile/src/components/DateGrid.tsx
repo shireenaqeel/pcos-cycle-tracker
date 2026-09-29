@@ -15,7 +15,7 @@ import {
   subMonths,
 } from 'date-fns';
 
-import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   value: Date;
@@ -118,21 +118,19 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       width: 32,
     },
     navButtonText: {
+      ...typography.title,
       color: colors.accent,
-      fontSize: 24,
-      lineHeight: 26,
     },
     monthLabel: {
+      ...typography.strong,
       color: colors.text,
-      fontSize: 16,
-      fontWeight: '600',
     },
     weekdayRow: {
       flexDirection: 'row',
     },
     weekdayLabel: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
       textAlign: 'center',
       width: `${100 / 7}%`,
     },
@@ -151,8 +149,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       backgroundColor: colors.accent,
     },
     cellText: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     cellTextDimmed: {
       color: colors.textFaint,

@@ -435,6 +435,26 @@ trace to one root: `uuid`'s missing buffer bounds check, reached via
 build tooling, not code that ships to the device, and `npm audit fix --force`
 would break the SDK 57 pin. It clears when Expo bumps the dependency.
 
+## Typography — use the scale, don't add sizes
+
+`typography` in `theme.ts` holds one role per job: `display` (the ring's day
+number and nothing else), `metric`, `title`, `heading`, `strong`, `body`,
+`bodySmall`, `caption`, `overline` (small uppercase card labels) and `micro`
+(footnotes, citations, disclaimers). Compose them:
+
+```ts
+cardLabel: { ...typography.overline, color: colors.textMuted },
+windowLine: { ...typography.bodySmall, color: colors.textMuted },
+```
+
+Before this existed there were 14 distinct font sizes, eight of them one-offs
+covering roughly three roles, and the uppercase-label declaration was copied
+into twelve files. **No screen should declare a bare `fontSize` again** — if
+nothing in the scale fits, the scale is missing a role, so add it there.
+
+Override `fontWeight` after the spread only where a specific instance really
+differs from its role; a handful legitimately do.
+
 ## Theming — the pattern to follow in new screens
 
 Light and dark both ship, following the system setting. There is no in-app

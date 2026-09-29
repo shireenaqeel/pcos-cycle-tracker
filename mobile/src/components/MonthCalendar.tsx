@@ -17,7 +17,7 @@ import {
 
 import { toIsoDate } from '../lib/dates';
 import type { CycleCalendar } from '../lib/cycleDays';
-import { radius, spacing, useThemedStyles, useThemeColors, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   calendar: CycleCalendar;
@@ -175,21 +175,19 @@ const makeStyles = (colors: ThemeColors) =>
       width: 32,
     },
     navButtonText: {
+      ...typography.title,
       color: colors.accent,
-      fontSize: 24,
-      lineHeight: 26,
     },
     monthLabel: {
+      ...typography.strong,
       color: colors.text,
-      fontSize: 16,
-      fontWeight: '600',
     },
     weekdayRow: {
       flexDirection: 'row',
     },
     weekdayLabel: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
       textAlign: 'center',
       width: `${100 / 7}%`,
     },
@@ -240,8 +238,8 @@ const makeStyles = (colors: ThemeColors) =>
       borderWidth: 2,
     },
     dayText: {
+      ...typography.bodySmall,
       color: colors.text,
-      fontSize: 14,
     },
     dayTextOutside: {
       color: colors.textFaint,
@@ -283,7 +281,7 @@ const makeStyles = (colors: ThemeColors) =>
       width: 6,
     },
     legendLabel: {
+      ...typography.micro,
       color: colors.textMuted,
-      fontSize: 12,
     },
   });

@@ -9,7 +9,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { getSymptomLogForDate } from '../db/symptoms';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DayDetail'>;
@@ -165,9 +165,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     date: {
+      ...typography.heading,
       color: colors.text,
-      fontSize: 20,
-      fontWeight: '700',
       marginBottom: spacing.xs,
     },
     card: {
@@ -179,23 +178,20 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
     },
     cardBody: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
-      lineHeight: 21,
     },
     empty: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
     },
     meta: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
     },
     button: {
       alignItems: 'center',
@@ -204,9 +200,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     buttonText: {
-      color: colors.onAccent,
-      fontSize: 15,
+      ...typography.body,
       fontWeight: '600',
+      color: colors.onAccent,
     },
     ghostButton: {
       alignItems: 'center',
@@ -216,9 +212,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     ghostButtonText: {
-      color: colors.accent,
-      fontSize: 14,
+      ...typography.bodySmall,
       fontWeight: '600',
+      color: colors.accent,
     },
     pressed: {
       opacity: 0.85,

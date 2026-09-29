@@ -9,7 +9,7 @@ import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog } from '../types';
 
 type Props = CompositeScreenProps<
@@ -168,9 +168,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     intro: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
     },
     card: {
       backgroundColor: colors.surface,
@@ -181,15 +180,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
     },
     big: {
+      ...typography.metric,
       color: colors.accent,
-      fontSize: 26,
-      fontWeight: '700',
       marginBottom: spacing.xs,
     },
     statRow: {
@@ -198,24 +194,22 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       paddingVertical: 2,
     },
     statLabel: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
     },
     statValue: {
-      color: colors.text,
-      fontSize: 14,
+      ...typography.bodySmall,
       fontWeight: '600',
+      color: colors.text,
     },
     note: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
-      lineHeight: 17,
       marginTop: spacing.xs,
     },
     empty: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
     },
     linkCard: {
       alignItems: 'center',
@@ -235,17 +229,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       gap: 2,
     },
     linkTitle: {
-      color: colors.text,
-      fontSize: 15,
+      ...typography.body,
       fontWeight: '600',
+      color: colors.text,
     },
     linkBody: {
+      ...typography.caption,
       color: colors.textMuted,
-      fontSize: 13,
-      lineHeight: 18,
     },
     chevron: {
+      ...typography.heading,
       color: colors.accent,
-      fontSize: 22,
     },
   });

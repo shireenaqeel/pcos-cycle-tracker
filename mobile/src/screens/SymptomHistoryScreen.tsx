@@ -8,7 +8,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SymptomHistory'>;
@@ -105,13 +105,12 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     intro: {
+      ...typography.caption,
       color: colors.textMuted,
-      fontSize: 13,
     },
     empty: {
+      ...typography.body,
       color: colors.textMuted,
-      fontSize: 15,
-      lineHeight: 22,
     },
     card: {
       backgroundColor: colors.surface,
@@ -125,21 +124,20 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       backgroundColor: colors.accentSoft,
     },
     date: {
-      color: colors.text,
-      fontSize: 15,
+      ...typography.body,
       fontWeight: '600',
+      color: colors.text,
     },
     tags: {
+      ...typography.bodySmall,
       color: colors.text,
-      fontSize: 14,
-      lineHeight: 20,
     },
     metaRow: {
       flexDirection: 'row',
       gap: spacing.md,
     },
     meta: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
     },
   });

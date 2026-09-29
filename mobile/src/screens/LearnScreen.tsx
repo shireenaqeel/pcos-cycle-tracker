@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { contentForPhenotype } from '../content';
 import { getOrCreateProfile } from '../db/profile';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemedStyles, type ThemeColors } from '../theme';
 import type { EducationContent, Phenotype } from '../types';
 
 type Props = CompositeScreenProps<
@@ -83,9 +83,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     intro: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
       marginBottom: spacing.xs,
     },
     card: {
@@ -96,14 +95,13 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     title: {
+      ...typography.strong,
       color: colors.text,
-      fontSize: 16,
-      fontWeight: '600',
     },
     toggle: {
-      color: colors.accent,
-      fontSize: 13,
+      ...typography.caption,
       fontWeight: '600',
+      color: colors.accent,
       marginTop: spacing.xs,
     },
     body: {
@@ -111,20 +109,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       marginTop: spacing.md,
     },
     paragraph: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
-      lineHeight: 22,
     },
     sourcesLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
       marginTop: spacing.sm,
-      textTransform: 'uppercase',
     },
     citation: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
-      lineHeight: 17,
     },
   });

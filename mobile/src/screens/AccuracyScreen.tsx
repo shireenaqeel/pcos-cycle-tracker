@@ -9,7 +9,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { resolvePredictions, type AccuracySummary } from '../engine/accuracy';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Accuracy'>;
 
@@ -104,9 +104,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     intro: {
+      ...typography.body,
       color: colors.textMuted,
-      fontSize: 15,
-      lineHeight: 22,
     },
     card: {
       backgroundColor: colors.surface,
@@ -117,25 +116,20 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.lg,
     },
     cardLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
     },
     headline: {
+      ...typography.metric,
       color: colors.accent,
-      fontSize: 28,
-      fontWeight: '700',
     },
     cardMeta: {
+      ...typography.bodySmall,
       color: colors.text,
-      fontSize: 14,
-      lineHeight: 20,
     },
     disclaimer: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
-      lineHeight: 17,
     },
     row: {
       alignItems: 'center',
@@ -151,17 +145,17 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       gap: 2,
     },
     rowWindow: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     rowActual: {
+      ...typography.caption,
       color: colors.textMuted,
-      fontSize: 13,
     },
     verdict: {
-      color: colors.textMuted,
-      fontSize: 13,
+      ...typography.caption,
       fontWeight: '600',
+      color: colors.textMuted,
     },
     verdictHit: {
       color: colors.accent,

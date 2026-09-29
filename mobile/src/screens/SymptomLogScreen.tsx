@@ -15,7 +15,7 @@ import { LOCAL_USER_ID } from '../db/profile';
 import { deleteSymptomLog, getSymptomLogForDate, saveSymptomLog } from '../db/symptoms';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SymptomLog'>;
@@ -171,16 +171,13 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     intro: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
     },
     sectionLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
       marginTop: spacing.sm,
-      textTransform: 'uppercase',
     },
     chipWrap: {
       flexDirection: 'row',
@@ -200,20 +197,20 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       borderColor: colors.accent,
     },
     chipText: {
+      ...typography.bodySmall,
       color: colors.text,
-      fontSize: 14,
     },
     chipTextSelected: {
       color: colors.accent,
       fontWeight: '600',
     },
     input: {
+      ...typography.strong,
       backgroundColor: colors.surface,
       borderColor: colors.border,
       borderRadius: radius.md,
       borderWidth: 1,
       color: colors.text,
-      fontSize: 16,
       padding: spacing.md,
     },
     saveButton: {
@@ -224,9 +221,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     saveButtonText: {
+      ...typography.strong,
       color: colors.onAccent,
-      fontSize: 16,
-      fontWeight: '600',
     },
     pressed: {
       opacity: 0.85,
@@ -236,15 +232,15 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     clearButtonText: {
+      ...typography.body,
       color: colors.accent,
-      fontSize: 15,
     },
     historyLink: {
       alignSelf: 'flex-start',
     },
     historyLinkText: {
-      color: colors.accent,
-      fontSize: 14,
+      ...typography.bodySmall,
       fontWeight: '600',
+      color: colors.accent,
     },
   });

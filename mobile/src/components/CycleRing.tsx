@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 
 import { ringGeometry } from '../lib/ring';
-import { spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 
 interface Props {
   cycleDay: number;
@@ -107,25 +107,20 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       width: SIZE,
     },
     dayLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 1.2,
-      textTransform: 'uppercase',
     },
     dayNumber: {
+      ...typography.display,
       color: colors.text,
-      fontSize: 54,
-      fontWeight: '800',
-      lineHeight: 60,
     },
     caption: {
+      ...typography.caption,
       color: colors.textMuted,
-      fontSize: 13,
     },
     headline: {
+      ...typography.heading,
       color: colors.text,
-      fontSize: 18,
-      fontWeight: '700',
       marginTop: 4,
       textAlign: 'center',
     },
@@ -144,7 +139,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       width: 10,
     },
     legendLabel: {
+      ...typography.micro,
       color: colors.textMuted,
-      fontSize: 12,
     },
   });

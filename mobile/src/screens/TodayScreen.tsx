@@ -15,7 +15,7 @@ import { MODEL_VERSION, predictNextCycle } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { radius, spacing, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
+import { radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, CycleRangePrediction } from '../types';
 
 type Props = CompositeScreenProps<
@@ -215,8 +215,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       paddingVertical: spacing.lg,
     },
     windowLine: {
+      ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 14,
       textAlign: 'center',
     },
     emptyHero: {
@@ -226,21 +226,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.lg,
     },
     emptyKicker: {
+      ...typography.overline,
       color: colors.accentSoft,
-      fontSize: 12,
-      letterSpacing: 0.8,
-      textTransform: 'uppercase',
     },
     emptyHeadline: {
+      ...typography.title,
       color: colors.onAccent,
-      fontSize: 24,
-      fontWeight: '700',
-      lineHeight: 30,
     },
     emptyBody: {
+      ...typography.bodySmall,
       color: colors.accentSoft,
-      fontSize: 14,
-      lineHeight: 20,
     },
     actions: {
       gap: spacing.sm,
@@ -258,9 +253,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     primaryButtonText: {
-      color: colors.accent,
-      fontSize: 16,
+      ...typography.strong,
       fontWeight: '700',
+      color: colors.accent,
     },
     secondaryButton: {
       alignItems: 'center',
@@ -272,9 +267,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     secondaryButtonText: {
-      color: colors.text,
-      fontSize: 14,
+      ...typography.bodySmall,
       fontWeight: '600',
+      color: colors.text,
     },
     pressed: {
       opacity: 0.85,
@@ -288,20 +283,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       padding: spacing.md,
     },
     cardLabel: {
+      ...typography.overline,
       color: colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
     },
     cardBody: {
+      ...typography.bodySmall,
       color: colors.text,
-      fontSize: 14,
-      lineHeight: 20,
     },
     disclaimer: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
-      lineHeight: 17,
     },
     historyRow: {
       alignItems: 'center',
@@ -315,11 +306,11 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       backgroundColor: colors.accentSoft,
     },
     historyDate: {
+      ...typography.body,
       color: colors.text,
-      fontSize: 15,
     },
     historyMeta: {
+      ...typography.micro,
       color: colors.textFaint,
-      fontSize: 12,
     },
   });
