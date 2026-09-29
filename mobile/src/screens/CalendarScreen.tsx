@@ -9,7 +9,7 @@ import { MonthCalendar } from '../components/MonthCalendar';
 import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
-import { predictNextCycle } from '../engine/predictor';
+import { projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { toIsoDate } from '../lib/dates';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
@@ -35,8 +35,9 @@ export function CalendarScreen({ navigation }: Props) {
           listSymptomLogs(profile.id),
         ]);
         if (!active) return;
-        const prediction = cycles.length === 0 ? null : predictNextCycle(cycles, profile.phenotype);
-        setCalendar(buildCycleCalendar(cycles, symptoms, prediction));
+        const windows =
+          cycles.length === 0 ? [] : projectCycleWindows(cycles, profile.phenotype);
+        setCalendar(buildCycleCalendar(cycles, symptoms, windows));
       })();
       return () => {
         active = false;
@@ -60,7 +61,11 @@ export function CalendarScreen({ navigation }: Props) {
       />
       <Text style={styles.hint}>
         Tap any day to see what's recorded on it, or to log a period or symptoms for that date.
-        Dashed days are predicted, not recorded.
+      </Text>
+      <Text style={styles.hint}>
+        Predicted windows get wider the further ahead they sit, because each cycle's uncertainty
+        adds to the last. They stop where they'd start overlapping — past that point the app can't
+        honestly tell one cycle from the next, so it shows nothing rather than guessing.
       </Text>
     </ScrollView>
   );

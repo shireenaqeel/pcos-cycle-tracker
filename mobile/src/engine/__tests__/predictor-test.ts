@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { predictNextCycle } from '../predictor';
+import { predictNextCycle, projectCycleWindows } from '../predictor';
 import type { CycleLog, EntrySource } from '../../types';
 
 function cycle(startDate: string, entrySource: EntrySource = 'logged'): CycleLog {
@@ -180,6 +180,66 @@ describe('messy input', () => {
 
   it('survives a single log, which yields no cycle length at all', () => {
     expect(predictNextCycle([cycle('2026-01-01')], 'regular').meanCycleLength).toBeCloseTo(28, 6);
+  });
+});
+
+describe('projecting further than the next period', () => {
+  const steady = evenlySpaced(10, 30);
+
+  it('agrees exactly with the next-cycle prediction on its first window', () => {
+    const next = predictNextCycle(steady, 'regular');
+    const [first] = projectCycleWindows(steady, 'regular');
+
+    expect(first.cycleIndex).toBe(1);
+    expect(first.rangeStartDay).toBe(next.rangeStartDay);
+    expect(first.rangeEndDay).toBe(next.rangeEndDay);
+  });
+
+  it('spaces successive windows about one cycle apart', () => {
+    const windows = projectCycleWindows(steady, 'regular');
+    expect(windows.length).toBeGreaterThan(2);
+
+    for (let i = 1; i < windows.length; i++) {
+      const gap = windows[i].rangeStartDay - windows[i - 1].rangeStartDay;
+      expect(gap).toBeGreaterThan(25);
+      expect(gap).toBeLessThan(35);
+    }
+  });
+
+  it('widens each window the further out it sits', () => {
+    const widths = projectCycleWindows(steady, 'regular').map(
+      (window) => window.rangeEndDay - window.rangeStartDay
+    );
+
+    for (let i = 1; i < widths.length; i++) {
+      expect(widths[i]).toBeGreaterThan(widths[i - 1]);
+    }
+  });
+
+  it('stops before windows overlap, so no day belongs to two cycles', () => {
+    for (const logs of [steady, evenlySpaced(6, 45, 'backfilled'), []]) {
+      const windows = projectCycleWindows(logs, 'unknown');
+      for (let i = 1; i < windows.length; i++) {
+        expect(windows[i].rangeStartDay).toBeGreaterThan(windows[i - 1].rangeEndDay);
+      }
+    }
+  });
+
+  it('projects fewer windows for a scattered history than a steady one', () => {
+    const start = new Date(Date.UTC(2026, 0, 1));
+    let cursor = 0;
+    const scattered = [0, 19, 44, 22, 41, 18, 46].map((gap) => {
+      cursor += gap;
+      return cycle(new Date(start.getTime() + cursor * 86_400_000).toISOString().slice(0, 10));
+    });
+
+    expect(projectCycleWindows(scattered, 'unknown').length).toBeLessThan(
+      projectCycleWindows(steady, 'regular').length
+    );
+  });
+
+  it('always offers at least the next window, even with nothing logged', () => {
+    expect(projectCycleWindows([], null).length).toBeGreaterThanOrEqual(1);
   });
 });
 

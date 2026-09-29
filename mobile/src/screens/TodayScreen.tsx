@@ -11,7 +11,7 @@ import { listCycleLogs } from '../db/cycles';
 import { recordPredictionIfChanged } from '../db/predictions';
 import { getOrCreateProfile } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
-import { MODEL_VERSION, predictNextCycle } from '../engine/predictor';
+import { MODEL_VERSION, predictNextCycle, projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
@@ -46,7 +46,9 @@ export function TodayScreen({ navigation }: Props) {
         if (!active) return;
 
         const prediction = cycles.length === 0 ? null : predictNextCycle(cycles, profile.phenotype);
-        const calendar = buildCycleCalendar(cycles, symptoms, prediction);
+        const windows =
+          cycles.length === 0 ? [] : projectCycleWindows(cycles, profile.phenotype);
+        const calendar = buildCycleCalendar(cycles, symptoms, windows);
         setData({ cycles, prediction, calendar });
 
         if (calendar.predictedWindow !== null && prediction !== null) {

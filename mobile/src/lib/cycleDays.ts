@@ -1,26 +1,28 @@
 import { addDays, differenceInCalendarDays } from 'date-fns';
 
 import { fromIsoDate, toIsoDate } from './dates';
-import type { CycleLog, CycleRangePrediction, DailySymptomLog } from '../types';
+import type { ProjectedWindow } from '../engine/predictor';
+import type { CycleLog, DailySymptomLog } from '../types';
 
-/** Guards against a mistyped end date turning into an unbounded loop. */
-const MAX_PERIOD_DAYS = 60;
+/** Guards a mistyped end date, or a very wide late window, against looping unbounded. */
+const MAX_SPAN_DAYS = 60;
 
 export interface CycleCalendar {
   /** Dates where bleeding was recorded, start through end. */
   periodDates: Set<string>;
-  /** Dates the next period is predicted to fall within. */
+  /** Every date inside any projected window, not just the next one. */
   predictedDates: Set<string>;
   symptomDates: Set<string>;
   /** Which day of the current cycle today is, counting the last start as day 1. */
   currentCycleDay: number | null;
+  /** The next window specifically — what Today reports and what gets snapshotted. */
   predictedWindow: { start: string; end: string } | null;
   lastPeriodStart: string | null;
 }
 
 function datesBetween(startIso: string, endIso: string): string[] {
   const start = fromIsoDate(startIso);
-  const span = Math.min(differenceInCalendarDays(fromIsoDate(endIso), start), MAX_PERIOD_DAYS);
+  const span = Math.min(differenceInCalendarDays(fromIsoDate(endIso), start), MAX_SPAN_DAYS);
   if (span < 0) return [startIso];
 
   const dates: string[] = [];
@@ -33,7 +35,7 @@ function datesBetween(startIso: string, endIso: string): string[] {
 export function buildCycleCalendar(
   cycles: CycleLog[],
   symptoms: DailySymptomLog[],
-  prediction: CycleRangePrediction | null,
+  windows: ProjectedWindow[],
   today: Date = new Date()
 ): CycleCalendar {
   const periodDates = new Set<string>();
@@ -48,12 +50,14 @@ export function buildCycleCalendar(
 
   let predictedWindow: CycleCalendar['predictedWindow'] = null;
   const predictedDates = new Set<string>();
-  if (lastPeriodStart !== null && prediction !== null) {
+  if (lastPeriodStart !== null) {
     const anchor = fromIsoDate(lastPeriodStart);
-    const start = toIsoDate(addDays(anchor, prediction.rangeStartDay));
-    const end = toIsoDate(addDays(anchor, prediction.rangeEndDay));
-    predictedWindow = { start, end };
-    for (const date of datesBetween(start, end)) predictedDates.add(date);
+    for (const window of windows) {
+      const start = toIsoDate(addDays(anchor, window.rangeStartDay));
+      const end = toIsoDate(addDays(anchor, window.rangeEndDay));
+      if (window.cycleIndex === 1) predictedWindow = { start, end };
+      for (const date of datesBetween(start, end)) predictedDates.add(date);
+    }
   }
 
   return {

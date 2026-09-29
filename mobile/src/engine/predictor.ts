@@ -83,16 +83,13 @@ function intrinsicVariance(observations: Observation[]): number {
   return Math.max(blended, MIN_INTRINSIC_STD_DEV_DAYS ** 2);
 }
 
-/**
- * Predicts the likely window for the next cycle as a range + confidence,
- * never a single date. Zero logs still returns a (wide) range, built from
- * the phenotype prior alone — that's the honest cold-start answer.
- */
-export function predictNextCycle(
-  logs: CycleLog[],
-  phenotype: Phenotype | null,
-  confidence: number = DEFAULT_CONFIDENCE
-): CycleRangePrediction {
+interface Posterior {
+  mean: number;
+  varianceOfMean: number;
+  cycleVariance: number;
+}
+
+function posteriorFor(logs: CycleLog[], phenotype: Phenotype | null): Posterior {
   const prior = PHENOTYPE_PRIORS[phenotype ?? 'unknown'];
   const observations = cycleLengthsFromLogs(logs);
   const cycleVariance = intrinsicVariance(observations);
@@ -103,25 +100,93 @@ export function predictNextCycle(
   let weightedMean = prior.meanDays * precision;
 
   for (const obs of observations) {
-    const obsVariance = cycleVariance * obs.varianceInflation;
-    const obsPrecision = 1 / obsVariance;
+    const obsPrecision = 1 / (cycleVariance * obs.varianceInflation);
     precision += obsPrecision;
     weightedMean += obs.cycleLengthDays * obsPrecision;
   }
 
-  const posteriorMean = weightedMean / precision;
-  const posteriorVarianceOfMean = 1 / precision;
+  return {
+    mean: weightedMean / precision,
+    varianceOfMean: 1 / precision,
+    cycleVariance,
+  };
+}
+
+/**
+ * Predicts the likely window for the next cycle as a range + confidence,
+ * never a single date. Zero logs still returns a (wide) range, built from
+ * the phenotype prior alone — that's the honest cold-start answer.
+ */
+export function predictNextCycle(
+  logs: CycleLog[],
+  phenotype: Phenotype | null,
+  confidence: number = DEFAULT_CONFIDENCE
+): CycleRangePrediction {
+  const posterior = posteriorFor(logs, phenotype);
 
   // Predicting the next *actual* cycle length, not just the mean, so intrinsic
   // variability still applies on top of whatever we now know about the mean.
-  const predictiveStdDev = Math.sqrt(posteriorVarianceOfMean + cycleVariance);
+  const predictiveStdDev = Math.sqrt(posterior.varianceOfMean + posterior.cycleVariance);
   const z = zForCentralConfidence(confidence);
 
   return {
-    rangeStartDay: Math.round(posteriorMean - z * predictiveStdDev),
-    rangeEndDay: Math.round(posteriorMean + z * predictiveStdDev),
+    rangeStartDay: Math.round(posterior.mean - z * predictiveStdDev),
+    rangeEndDay: Math.round(posterior.mean + z * predictiveStdDev),
     confidence,
-    meanCycleLength: posteriorMean,
+    meanCycleLength: posterior.mean,
     stdDevCycleLength: predictiveStdDev,
   };
+}
+
+export interface ProjectedWindow {
+  /** 1 is the next period, 2 the one after it, and so on. */
+  cycleIndex: number;
+  rangeStartDay: number;
+  rangeEndDay: number;
+  confidence: number;
+}
+
+/**
+ * Windows for the next several periods, so the calendar isn't blank the moment
+ * you page a month forward.
+ *
+ * Uncertainty compounds twice over: the error in the estimated mean applies
+ * once per cycle (so it grows with k), while independent cycle-to-cycle
+ * variation accumulates as a random walk (so it grows with sqrt(k)). Windows
+ * therefore widen the further out they sit, and projection **stops as soon as
+ * one window would overlap the previous one** — past that point the app cannot
+ * honestly say which cycle a given day belongs to, and a continuous smear of
+ * "maybe" across the calendar would say less than nothing. A steady history
+ * gets several windows; a scattered one gets very few, which is the truth.
+ *
+ * The six-cycle horizon is a plain product limit on top of that: a steady
+ * history stays non-overlapping for a year, but by then each window spans
+ * nearly a whole cycle, so paging that far out would tint most of the calendar
+ * to say very little.
+ */
+export function projectCycleWindows(
+  logs: CycleLog[],
+  phenotype: Phenotype | null,
+  confidence: number = DEFAULT_CONFIDENCE,
+  maxCycles = 6
+): ProjectedWindow[] {
+  const posterior = posteriorFor(logs, phenotype);
+  const z = zForCentralConfidence(confidence);
+  const windows: ProjectedWindow[] = [];
+
+  for (let cycleIndex = 1; cycleIndex <= maxCycles; cycleIndex++) {
+    const spread = Math.sqrt(
+      cycleIndex ** 2 * posterior.varianceOfMean + cycleIndex * posterior.cycleVariance
+    );
+    const centre = cycleIndex * posterior.mean;
+    const rangeStartDay = Math.round(centre - z * spread);
+    const rangeEndDay = Math.round(centre + z * spread);
+
+    const previous = windows[windows.length - 1];
+    if (previous !== undefined && rangeStartDay <= previous.rangeEndDay) break;
+
+    windows.push({ cycleIndex, rangeStartDay, rangeEndDay, confidence });
+  }
+
+  return windows;
 }

@@ -514,8 +514,28 @@ conventions are what people already know:
   which it previously never was.
 
 `predictNextCycle` is only called when at least one cycle exists; with none,
-`buildCycleCalendar` gets `null` and the calendar simply paints no predicted
-window, rather than inventing one anchored to today.
+`buildCycleCalendar` gets an empty window list and the calendar paints no
+prediction, rather than inventing one anchored to today.
+
+### Why future months stop showing predictions
+
+`projectCycleWindows` projects several cycles ahead so paging forward isn't
+blank. Uncertainty compounds twice over: error in the estimated mean applies
+once per cycle (growing with k), while independent cycle-to-cycle variation
+accumulates as a random walk (growing with sqrt(k)). Windows therefore widen
+the further out they sit.
+
+Projection **stops as soon as a window would overlap the previous one**. Past
+that point there is no honest way to say which cycle a day belongs to, and a
+continuous wash of "maybe" over the calendar communicates less than an empty
+one. This is self-adjusting in the right direction: a steady history keeps
+separate windows for a year, while a scattered PCOS history gets two — which
+is the actual state of knowledge, not a limitation to paper over. The next
+window is always returned even with nothing logged, since Today depends on it.
+
+On top of that sits a plain six-cycle horizon, because a steady history stays
+non-overlapping far enough out that each window spans nearly a whole cycle,
+and tinting most of the calendar to say very little is not worth it.
 
 ## Keep the app and the education content honest about each other
 
@@ -538,8 +558,6 @@ side changes, change the other in the same commit.
   server serves it, which blocks real day-to-day use.
 - Default Expo app icons, and no accessibility labels or dynamic-type
   handling.
-- Nothing shows *predicted* period days beyond the next window, so the
-  calendar looks empty when you page months ahead.
 
 ## Open questions / pending decisions
 
