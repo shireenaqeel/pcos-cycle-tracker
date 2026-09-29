@@ -157,9 +157,7 @@ const makeStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       padding: spacing.md,
     },
     header: {

@@ -101,7 +101,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     addButton: {
       alignItems: 'center',
       backgroundColor: colors.accent,
-      borderRadius: radius.md,
+      borderRadius: radius.pill,
       padding: spacing.md,
     },
     addButtonPressed: {
@@ -116,9 +116,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     list: {
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       padding: spacing.md,
     },
     listTitle: {

@@ -189,9 +189,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     ghostButton: {
       alignItems: 'center',
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       padding: spacing.md,
     },
     ghostButtonText: {
@@ -206,9 +204,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     flowOption: {
       alignItems: 'center',
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       flex: 1,
       padding: spacing.md,
     },
@@ -227,7 +223,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     saveButton: {
       alignItems: 'center',
       backgroundColor: colors.accent,
-      borderRadius: radius.md,
+      borderRadius: radius.pill,
       marginTop: spacing.md,
       padding: spacing.md,
     },

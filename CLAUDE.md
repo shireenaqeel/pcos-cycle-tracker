@@ -634,6 +634,12 @@ Soft and organic, chosen deliberately over the default look:
   their day.
 - Section labels are sentence case. A wall of tiny uppercase headings is the
   most generic thing a screen can do.
+- Panels are **borderless**. A hairline border around every white box is what
+  made the app read as a dashboard; tint and radius separate things instead.
+  Solid accent buttons are pills (`radius.pill`), panels use `radius.lg`.
+- Screens that lead with a number or a state — Today, Calendar, Track record —
+  open with a gradient panel and a blob behind it rather than a heading.
+  Learn's articles carry rotating tints so the list reads as a shelf.
 
 ## Themes
 

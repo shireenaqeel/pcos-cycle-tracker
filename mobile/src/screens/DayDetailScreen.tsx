@@ -171,9 +171,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     card: {
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       gap: spacing.sm,
       padding: spacing.md,
     },
@@ -196,7 +194,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     button: {
       alignItems: 'center',
       backgroundColor: colors.accent,
-      borderRadius: radius.md,
+      borderRadius: radius.pill,
       padding: spacing.md,
     },
     buttonText: {

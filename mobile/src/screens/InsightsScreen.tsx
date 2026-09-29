@@ -245,9 +245,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     card: {
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       gap: spacing.xs,
       padding: spacing.md,
     },
@@ -290,9 +288,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     linkCard: {
       alignItems: 'center',
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       flexDirection: 'row',
       gap: spacing.sm,
       padding: spacing.md,

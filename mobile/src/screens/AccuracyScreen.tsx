@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
+
+import { Blob, SectionLabel } from '../components/Soft';
 
 import { listCycleLogs } from '../db/cycles';
 import { listPredictionSnapshots } from '../db/predictions';
@@ -52,20 +55,30 @@ export function AccuracyScreen(_props: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Track record</Text>
-        <Text style={styles.headline}>
-          {hitPercent}% landed in the window
-        </Text>
+      <View style={styles.heroWrap}>
+        <Blob color={colors.sage} size={200} style={styles.blob} />
+        <LinearGradient
+          colors={[colors.gradientFrom, colors.gradientTo]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <SectionLabel>Track record</SectionLabel>
+          <Text style={styles.headline}>{hitPercent}% landed in the window</Text>
         <Text style={styles.cardMeta}>
           Across {summary.resolved.length}{' '}
           {summary.resolved.length === 1 ? 'prediction' : 'predictions'}. The app claimed about{' '}
           {claimedPercent}%, so the closer these two numbers are, the better calibrated it is.
         </Text>
-        <Text style={styles.disclaimer}>
-          A small number of predictions can't tell you much either way — this gets meaningful after
-          several cycles.
-        </Text>
+          <View style={styles.compareBar}>
+            <View style={[styles.compareFill, { width: `${hitPercent}%` }]} />
+            <View style={[styles.claimMarker, { left: `${claimedPercent}%` }]} />
+          </View>
+          <Text style={styles.disclaimer}>
+            The bar is how often it was right; the notch is how confident it claimed to be. A small
+            number of predictions can't tell you much either way.
+          </Text>
+        </LinearGradient>
       </View>
 
       {[...summary.resolved].reverse().map((entry) => (
@@ -79,6 +92,9 @@ export function AccuracyScreen(_props: Props) {
               Arrived {format(fromIsoDate(entry.actualStartDate), 'MMM d')}
             </Text>
           </View>
+          <View
+            style={[styles.verdictDot, entry.landedInWindow && styles.verdictDotHit]}
+          />
           <Text style={[styles.verdict, entry.landedInWindow && styles.verdictHit]}>
             {entry.landedInWindow
               ? 'in window'
@@ -107,11 +123,53 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
       ...typography.body,
       color: colors.textMuted,
     },
+    heroWrap: {
+      marginBottom: spacing.xs,
+    },
+    blob: {
+      opacity: 0.4,
+      position: 'absolute',
+      right: -60,
+      top: -55,
+    },
+    hero: {
+      borderRadius: radius.xl,
+      gap: spacing.sm,
+      padding: spacing.lg,
+    },
+    compareBar: {
+      backgroundColor: colors.border,
+      borderRadius: radius.pill,
+      height: 10,
+      justifyContent: 'center',
+      overflow: 'visible',
+    },
+    compareFill: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      height: 10,
+    },
+    claimMarker: {
+      backgroundColor: colors.text,
+      borderRadius: radius.pill,
+      height: 18,
+      position: 'absolute',
+      top: -4,
+      width: 3,
+    },
+    verdictDot: {
+      backgroundColor: colors.textFaint,
+      borderRadius: radius.pill,
+      height: 8,
+      marginRight: spacing.sm,
+      width: 8,
+    },
+    verdictDotHit: {
+      backgroundColor: colors.accent,
+    },
     card: {
       backgroundColor: colors.surface,
-      borderColor: colors.border,
       borderRadius: radius.lg,
-      borderWidth: 1,
       gap: spacing.sm,
       padding: spacing.lg,
     },
@@ -134,9 +192,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     row: {
       alignItems: 'center',
       backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
       flexDirection: 'row',
       justifyContent: 'space-between',
       padding: spacing.md,
