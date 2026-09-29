@@ -6,6 +6,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { differenceInCalendarDays, format } from 'date-fns';
 
+import { CycleRing } from '../components/CycleRing';
 import { listCycleLogs } from '../db/cycles';
 import { recordPredictionIfChanged } from '../db/predictions';
 import { getOrCreateProfile } from '../db/profile';
@@ -75,36 +76,41 @@ export function TodayScreen({ navigation }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.hero}>
-        {calendar.currentCycleDay === null ? (
-          <>
-            <Text style={styles.heroKicker}>Nothing recorded yet</Text>
-            <Text style={styles.heroHeadline}>Let's start with one date</Text>
-            <Text style={styles.heroBody}>
-              Add when your last period started and this becomes a real prediction instead of an
-              empty screen.
+      {calendar.currentCycleDay === null || prediction === null ? (
+        <View style={styles.emptyHero}>
+          <Text style={styles.emptyKicker}>Nothing recorded yet</Text>
+          <Text style={styles.emptyHeadline}>Let's start with one date</Text>
+          <Text style={styles.emptyBody}>
+            Add when your last period started and this becomes a real prediction instead of an
+            empty screen.
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.ringCard}>
+          <CycleRing
+            cycleDay={calendar.currentCycleDay}
+            windowStartDay={prediction.rangeStartDay}
+            windowEndDay={prediction.rangeEndDay}
+            caption={
+              bleedingToday
+                ? 'period recorded today'
+                : `of about ${Math.round(prediction.meanCycleLength)}`
+            }
+            headline={
+              calendar.predictedWindow === null
+                ? ''
+                : windowPhrase(calendar.predictedWindow.start, calendar.predictedWindow.end)
+            }
+          />
+          {calendar.predictedWindow !== null && (
+            <Text style={styles.windowLine}>
+              {format(fromIsoDate(calendar.predictedWindow.start), 'MMM d')} –{' '}
+              {format(fromIsoDate(calendar.predictedWindow.end), 'MMM d')} · about{' '}
+              {Math.round(prediction.confidence * 100)}% likely
             </Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.heroKicker}>
-              {bleedingToday ? 'Period recorded today' : `Cycle day ${calendar.currentCycleDay}`}
-            </Text>
-            {prediction !== null && calendar.predictedWindow !== null ? (
-              <>
-                <Text style={styles.heroHeadline}>
-                  {windowPhrase(calendar.predictedWindow.start, calendar.predictedWindow.end)}
-                </Text>
-                <Text style={styles.heroBody}>
-                  {format(fromIsoDate(calendar.predictedWindow.start), 'MMM d')} –{' '}
-                  {format(fromIsoDate(calendar.predictedWindow.end), 'MMM d')} · about{' '}
-                  {Math.round(prediction.confidence * 100)}% likely
-                </Text>
-              </>
-            ) : null}
-          </>
-        )}
-      </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.actions}>
         <Pressable
@@ -196,25 +202,40 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.md,
   },
-  hero: {
+  ringCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  windowLine: {
+    color: colors.textMuted,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  emptyHero: {
     backgroundColor: colors.accent,
     borderRadius: radius.lg,
     gap: spacing.xs,
     padding: spacing.lg,
   },
-  heroKicker: {
+  emptyKicker: {
     color: colors.accentSoft,
     fontSize: 12,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
-  heroHeadline: {
+  emptyHeadline: {
     color: colors.onAccent,
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 30,
   },
-  heroBody: {
+  emptyBody: {
     color: colors.accentSoft,
     fontSize: 14,
     lineHeight: 20,
