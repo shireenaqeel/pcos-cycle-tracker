@@ -103,7 +103,6 @@ export function SettingsScreen(_props: Props) {
       windowStart: calendar.predictedWindow?.start ?? null,
       windowEnd: calendar.predictedWindow?.end ?? null,
       hour,
-      loggedToday: false,
     });
     successFeedback();
   }

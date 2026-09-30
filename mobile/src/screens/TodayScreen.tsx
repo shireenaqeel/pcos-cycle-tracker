@@ -17,6 +17,7 @@ import { MODEL_VERSION, predictNextCycle, projectCycleWindows } from '../engine/
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import { successFeedback } from '../lib/feedback';
+import { rescheduleReminders } from '../lib/reminders';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import {
   radius,
@@ -67,13 +68,24 @@ export function TodayScreen({ navigation }: Props) {
     const calendar = buildCycleCalendar(cycles, symptoms, windows);
 
     if (calendar.predictedWindow !== null && prediction !== null) {
-      await recordPredictionIfChanged({
+      const windowMoved = await recordPredictionIfChanged({
         userId: profile.id,
         rangeStart: calendar.predictedWindow.start,
         rangeEnd: calendar.predictedWindow.end,
         confidence: prediction.confidence,
         modelVersion: MODEL_VERSION,
       });
+
+      // Reminders are built from the window, so they go stale the moment it
+      // shifts. Rebuilding only when it actually moved keeps this off the
+      // every-focus path.
+      if (windowMoved && profile.remindersEnabled) {
+        await rescheduleReminders({
+          windowStart: calendar.predictedWindow.start,
+          windowEnd: calendar.predictedWindow.end,
+          hour: profile.reminderHour,
+        });
+      }
     }
 
     return { cycles, prediction, calendar, today, name: profile.displayName };

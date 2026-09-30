@@ -36,6 +36,9 @@ export async function listPredictionSnapshots(userId: string): Promise<Predictio
  * Records a prediction only when it differs from the last one stored. The home
  * screen recomputes on every focus, and a snapshot per glance would bury the
  * handful of moments the forecast actually moved.
+ *
+ * Returns whether a new snapshot was written, which is also the answer to
+ * "did the predicted window just move" — the cue for rebuilding reminders.
  */
 export async function recordPredictionIfChanged(input: {
   userId: string;
@@ -43,7 +46,7 @@ export async function recordPredictionIfChanged(input: {
   rangeEnd: string;
   confidence: number;
   modelVersion: string;
-}): Promise<void> {
+}): Promise<boolean> {
   const db = await getDb();
   const latest = await db.getFirstAsync<PredictionSnapshotRow>(
     `SELECT * FROM prediction_snapshot WHERE user_id = ? ORDER BY generated_at DESC LIMIT 1`,
@@ -56,7 +59,7 @@ export async function recordPredictionIfChanged(input: {
     latest.range_end === input.rangeEnd &&
     latest.model_version === input.modelVersion
   ) {
-    return;
+    return false;
   }
 
   await db.runAsync(
@@ -71,4 +74,5 @@ export async function recordPredictionIfChanged(input: {
     input.confidence,
     input.modelVersion
   );
+  return true;
 }

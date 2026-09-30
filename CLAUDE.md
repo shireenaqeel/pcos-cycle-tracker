@@ -693,7 +693,9 @@ the work was making the privacy real and closing the feature gaps.
   Rescheduling **cancels and rebuilds wholesale**, because the prediction moves
   whenever a cycle is logged or edited, and reconciling individual
   notifications against a shifted window is how apps end up announcing a date
-  they no longer predict.
+  they no longer predict. `recordPredictionIfChanged` returns whether it wrote
+  a snapshot, which is the same question as "did the window just move", so
+  Today rebuilds reminders on exactly those occasions and not on every focus.
 - **Export** (`lib/exportData.ts`) — everything to a JSON file via the share
   sheet. A dead phone otherwise takes the only copy, and the Learn content
   tells people to bring a history to an appointment, which has to be something

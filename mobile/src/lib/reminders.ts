@@ -14,8 +14,6 @@ export interface ReminderPlan {
   windowEnd: string | null;
   /** Hour of day for the daily nudge, 0-23. */
   hour: number;
-  /** True when a period was already recorded as starting today. */
-  loggedToday: boolean;
 }
 
 export async function requestPermission(): Promise<boolean> {
