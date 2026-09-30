@@ -19,13 +19,40 @@ import {
   useThemedStyles,
   type ThemeColors,
 } from '../theme';
-import type { MovementLevel, SymptomTag } from '../types';
+import type { FlowIntensity, MovementLevel, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CheckIn'>;
 
-type StepName = 'mood' | 'stress' | 'sleep' | 'water' | 'movement' | 'body' | 'notes' | 'done';
+type StepName =
+  | 'flow'
+  | 'mood'
+  | 'stress'
+  | 'sleep'
+  | 'water'
+  | 'movement'
+  | 'body'
+  | 'meds'
+  | 'notes'
+  | 'done';
 
-const STEPS: StepName[] = ['mood', 'stress', 'sleep', 'water', 'movement', 'body', 'notes', 'done'];
+const STEPS: StepName[] = [
+  'flow',
+  'mood',
+  'stress',
+  'sleep',
+  'water',
+  'movement',
+  'body',
+  'meds',
+  'notes',
+  'done',
+];
+
+const FLOW_OPTIONS: { value: FlowIntensity; label: string }[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'heavy', label: 'Heavy' },
+];
 
 const MOOD_OPTIONS = ['good', 'even', 'low', 'irritable', 'anxious'];
 
@@ -48,6 +75,11 @@ const SYMPTOM_OPTIONS: { value: SymptomTag; label: string }[] = [
 ];
 
 const PROMPTS: Record<StepName, { title: string; sub: string }> = {
+  flow: { title: 'Bleeding today?', sub: 'Leave it blank if not.' },
+  meds: {
+    title: 'Anything you took?',
+    sub: 'Supplements, the pill, metformin, painkillers — whatever applies.',
+  },
   mood: { title: 'How are you feeling?', sub: 'However you land is fine.' },
   stress: { title: 'How loud is today?', sub: 'One is calm, five is overwhelmed.' },
   sleep: { title: 'How did you sleep?', sub: 'Tap roughly how many hours you got.' },
@@ -69,6 +101,8 @@ export function CheckInScreen({ navigation, route }: Props) {
   const isoDate = toIsoDate(date);
 
   const [stepIndex, setStepIndex] = useState(0);
+  const [flow, setFlow] = useState<FlowIntensity | null>(null);
+  const [medications, setMedications] = useState('');
   const [mood, setMood] = useState<string | null>(null);
   const [stress, setStress] = useState<number | null>(null);
   const [hydration, setHydration] = useState(0);
@@ -100,6 +134,8 @@ export function CheckInScreen({ navigation, route }: Props) {
       setFoodNote(entry.foodNote ?? '');
       setOtherNote(entry.otherNote ?? '');
       setBasalTemp(entry.basalTemp);
+      setFlow(entry.flow);
+      setMedications(entry.medications ?? '');
       setExistingEntry(true);
     });
     return () => {
@@ -144,6 +180,8 @@ export function CheckInScreen({ navigation, route }: Props) {
       movement,
       foodNote: foodNote.trim() === '' ? null : foodNote.trim(),
       otherNote: otherNote.trim() === '' ? null : otherNote.trim(),
+      flow,
+      medications: medications.trim() === '' ? null : medications.trim(),
     });
     successFeedback();
     navigation.goBack();
@@ -157,12 +195,14 @@ export function CheckInScreen({ navigation, route }: Props) {
   }
 
   const summary = [
+    flow === null ? null : `${flow} flow`,
     mood === null ? null : `feeling ${mood}`,
     stress === null ? null : `stress ${stress} of 5`,
     sleep === 0 ? null : `${sleep} hours of sleep`,
     hydration === 0 ? null : `${hydration} glasses of water`,
     movement === null ? null : MOVEMENT_OPTIONS.find((o) => o.value === movement)?.label.toLowerCase(),
     tags.length === 0 ? null : `${tags.length} thing${tags.length === 1 ? '' : 's'} noticed`,
+    medications.trim() === '' ? null : `took ${medications.trim()}`,
   ].filter((line): line is string => line !== null);
 
   return (
@@ -197,6 +237,30 @@ export function CheckInScreen({ navigation, route }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {step === 'flow' && (
+            <View style={styles.wrap}>
+              {FLOW_OPTIONS.map((option) => (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  selected={flow === option.value}
+                  onPress={() => setFlow(flow === option.value ? null : option.value)}
+                />
+              ))}
+            </View>
+          )}
+
+          {step === 'meds' && (
+            <TextInput
+              style={styles.input}
+              value={medications}
+              onChangeText={setMedications}
+              placeholder="Inositol, metformin, the pill, ibuprofen…"
+              placeholderTextColor={colors.textFaint}
+              multiline
+            />
+          )}
+
           {step === 'mood' && (
             <View style={styles.wrap}>
               {MOOD_OPTIONS.map((option) => (

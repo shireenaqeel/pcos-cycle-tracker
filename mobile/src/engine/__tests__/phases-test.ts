@@ -33,6 +33,8 @@ function day(
     movement: null,
     foodNote: null,
     otherNote: null,
+    flow: null,
+    medications: null,
   };
 }
 

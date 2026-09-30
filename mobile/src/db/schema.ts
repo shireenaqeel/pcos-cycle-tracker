@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS user_profile (
   self_reported_dx INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   display_name TEXT,
-  theme TEXT
+  theme TEXT,
+  reminders_enabled INTEGER,
+  reminder_hour INTEGER,
+  app_lock_enabled INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS cycle_log (
@@ -32,7 +35,9 @@ CREATE TABLE IF NOT EXISTS daily_symptom_log (
   sleep_hours REAL,
   movement TEXT,
   food_note TEXT,
-  other_note TEXT
+  other_note TEXT,
+  flow TEXT,
+  medications TEXT
 );
 
 CREATE TABLE IF NOT EXISTS prediction_snapshot (
@@ -75,5 +80,17 @@ export const MIGRATIONS: { toVersion: number; columns: { table: string; column: 
   {
     toVersion: 3,
     columns: [{ table: 'user_profile', column: 'theme', type: 'TEXT' }],
+  },
+  {
+    toVersion: 4,
+    columns: [
+      { table: 'user_profile', column: 'reminders_enabled', type: 'INTEGER' },
+      { table: 'user_profile', column: 'reminder_hour', type: 'INTEGER' },
+      { table: 'user_profile', column: 'app_lock_enabled', type: 'INTEGER' },
+      // Flow belongs to a day, not to a whole cycle: it changes across a period,
+      // and cycle_log.flow_intensity can only hold one answer for all of it.
+      { table: 'daily_symptom_log', column: 'flow', type: 'TEXT' },
+      { table: 'daily_symptom_log', column: 'medications', type: 'TEXT' },
+    ],
   },
 ];

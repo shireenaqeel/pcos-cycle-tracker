@@ -678,3 +678,50 @@ Controls are built to suit what they measure (`components/CheckInControls.tsx`):
 
 Every step is skippable and the summary states what was captured. Nothing here
 feeds the prediction, and the last step says so.
+
+## Features added from researching the category
+
+Research into what people actually ask of period trackers (see the README's
+sources) found two dominant grievances — **paywalls** and **privacy** — plus a
+consistent set of expected features. This app is already free and offline, so
+the work was making the privacy real and closing the feature gaps.
+
+- **Reminders** (`lib/reminders.ts`) — two days before the window opens, on the
+  day it opens, a nudge if the window passes with nothing logged, and a daily
+  check-in prompt at a chosen hour. Scheduled entirely on device: no push
+  token, no server, nothing about a cycle leaves the phone to make one appear.
+  Rescheduling **cancels and rebuilds wholesale**, because the prediction moves
+  whenever a cycle is logged or edited, and reconciling individual
+  notifications against a shifted window is how apps end up announcing a date
+  they no longer predict.
+- **Export** (`lib/exportData.ts`) — everything to a JSON file via the share
+  sheet. A dead phone otherwise takes the only copy, and the Learn content
+  tells people to bring a history to an appointment, which has to be something
+  they can send. Uses the SDK 57 `File`/`Paths` API; the legacy
+  `writeAsStringAsync` throws at runtime now.
+- **Delete everything** (`db/reset.ts`) — wrapped in a transaction, keeps the
+  profile so onboarding doesn't rerun. A tracker that cannot forget is a
+  liability; with no server copy this is real deletion.
+- **App lock** (`LockScreen`) — defers entirely to the device's biometrics or
+  passcode. **No app-specific PIN**, deliberately: that would mean holding a
+  secret this app has no business holding, and it would be weaker than what
+  the phone already enforces. With no enrolled lock it opens rather than
+  trapping someone out of their own records.
+- **Per-day flow** — flow moved onto the daily log (schema v4).
+  `cycle_log.flow_intensity` can only hold one answer for an entire period,
+  which is wrong: flow changes across its days.
+- **Medications and supplements** — a free-text daily field. PCOS regimes
+  (inositol, metformin, spironolactone, the pill) are the thing people most
+  often want to correlate against symptoms.
+
+### Still missing, and why
+
+- **Home-screen widget** — needs native config Expo Go can't load; wait for a
+  real build.
+- **Ovulation and fertile-window prediction** — every mainstream app shows one.
+  Deliberately absent: for irregular and PCOS cycles ovulation timing is
+  exactly what's unreliable, and a confident fertile window would be the least
+  honest thing in the app. Revisit only with a real signal (LH tests, sustained
+  basal temperature) rather than counting back from a predicted date.
+- **Choosing which check-in steps appear** — users complain loudly when apps
+  remove this; ten fixed steps is already a lot to tap through.

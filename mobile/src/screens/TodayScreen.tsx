@@ -116,6 +116,8 @@ export function TodayScreen({ navigation }: Props) {
       movement: today?.movement ?? null,
       foodNote: today?.foodNote ?? null,
       otherNote: today?.otherNote ?? null,
+      flow: today?.flow ?? null,
+      medications: today?.medications ?? null,
     });
     successFeedback();
     setData(await load());

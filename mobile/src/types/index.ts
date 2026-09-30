@@ -10,6 +10,10 @@ export interface UserProfile {
   displayName: string | null;
   /** Null until they pick one; the provider falls back to the default. */
   theme: ThemeName | null;
+  remindersEnabled: boolean;
+  /** Hour of day, 0-23, for the daily nudge. */
+  reminderHour: number;
+  appLockEnabled: boolean;
 }
 
 export type EntrySource = 'logged' | 'backfilled';
@@ -19,7 +23,7 @@ export interface CycleLog {
   userId: string;
   startDate: string;
   endDate: string | null;
-  flowIntensity: 'light' | 'medium' | 'heavy' | null;
+  flowIntensity: FlowIntensity | null;
   isConfirmed: boolean;
   entrySource: EntrySource;
 }
@@ -33,6 +37,8 @@ export type SymptomTag =
   | 'fatigue'
   | 'mood_swing'
   | 'ovulation_pain';
+
+export type FlowIntensity = 'light' | 'medium' | 'heavy';
 
 export type MovementLevel = 'none' | 'light' | 'moderate' | 'intense';
 
@@ -54,8 +60,12 @@ export interface DailySymptomLog {
   sleepHours: number | null;
   movement: MovementLevel | null;
   foodNote: string | null;
-  /** Anything else affecting the day — travel, illness, medication, work. */
+  /** Anything else affecting the day — travel, illness, work. */
   otherNote: string | null;
+  /** Bleeding on this specific day; a period's flow changes across its days. */
+  flow: FlowIntensity | null;
+  /** What was taken today, free text — inositol, metformin, the pill, painkillers. */
+  medications: string | null;
 }
 
 export interface PredictionSnapshot {

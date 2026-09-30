@@ -11,9 +11,17 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { Alert, Switch } from 'react-native';
+
 import { listCycleLogs } from '../db/cycles';
-import { getOrCreateProfile, setPhenotype } from '../db/profile';
+import { deleteAllRecords } from '../db/reset';
+import { getOrCreateProfile, setAppLock, setPhenotype, setReminderPrefs } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
+import { exportEverything } from '../lib/exportData';
+import { cancelReminders, requestPermission, rescheduleReminders } from '../lib/reminders';
+import { projectCycleWindows } from '../engine/predictor';
+import { buildCycleCalendar } from '../lib/cycleDays';
+import { successFeedback, warningFeedback } from '../lib/feedback';
 import { paletteFor, THEME_OPTIONS, useTheme } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
@@ -35,6 +43,10 @@ export function SettingsScreen(_props: Props) {
   const dark = useColorScheme() === 'dark';
   const [phenotype, setCurrent] = useState<Phenotype | null>(null);
   const [counts, setCounts] = useState<{ cycles: number; symptoms: number } | null>(null);
+  const [reminders, setReminders] = useState(false);
+  const [reminderHour, setReminderHour] = useState(20);
+  const [appLock, setAppLockState] = useState(false);
+  const [working, setWorking] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -48,12 +60,87 @@ export function SettingsScreen(_props: Props) {
         if (!active) return;
         setCurrent(profile.phenotype);
         setCounts({ cycles: cycles.length, symptoms: symptoms.length });
+        setReminders(profile.remindersEnabled);
+        setReminderHour(profile.reminderHour);
+        setAppLockState(profile.appLockEnabled);
       })();
       return () => {
         active = false;
       };
     }, [])
   );
+
+  /** Reminder times are derived from the current prediction, so they're rebuilt here. */
+  async function applyReminders(enabled: boolean, hour: number) {
+    setReminders(enabled);
+    setReminderHour(hour);
+    await setReminderPrefs({ enabled, hour });
+
+    if (!enabled) {
+      await cancelReminders();
+      return;
+    }
+
+    if (!(await requestPermission())) {
+      setReminders(false);
+      await setReminderPrefs({ enabled: false, hour });
+      Alert.alert(
+        'Notifications are off',
+        'Your phone is blocking notifications for this app. Turn them on in system settings and try again.'
+      );
+      return;
+    }
+
+    const profile = await getOrCreateProfile();
+    const [cycles, symptoms] = await Promise.all([
+      listCycleLogs(profile.id),
+      listSymptomLogs(profile.id),
+    ]);
+    const windows = cycles.length === 0 ? [] : projectCycleWindows(cycles, profile.phenotype);
+    const calendar = buildCycleCalendar(cycles, symptoms, windows);
+
+    await rescheduleReminders({
+      windowStart: calendar.predictedWindow?.start ?? null,
+      windowEnd: calendar.predictedWindow?.end ?? null,
+      hour,
+      loggedToday: false,
+    });
+    successFeedback();
+  }
+
+  async function exportData() {
+    setWorking('export');
+    try {
+      const result = await exportEverything();
+      if (!result.shared) {
+        Alert.alert('Saved', `Sharing isn't available here. The file is at ${result.path}`);
+      }
+    } catch {
+      Alert.alert('Could not export', 'Something went wrong writing the file.');
+    } finally {
+      setWorking(null);
+    }
+  }
+
+  function confirmDeleteAll() {
+    Alert.alert(
+      'Delete everything?',
+      'Every period, check-in and prediction on this device. There is no server copy, so this cannot be undone.',
+      [
+        { text: 'Keep it', style: 'cancel' },
+        {
+          text: 'Delete all',
+          style: 'destructive',
+          onPress: async () => {
+            warningFeedback();
+            await deleteAllRecords();
+            await cancelReminders();
+            setCounts({ cycles: 0, symptoms: 0 });
+          },
+        },
+      ]
+    );
+  }
 
   async function change(value: Phenotype) {
     setCurrent(value);
@@ -125,13 +212,79 @@ export function SettingsScreen(_props: Props) {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardLabel}>Reminders</Text>
+        <View style={styles.switchRow}>
+          <Text style={styles.switchLabel}>Nudge me about my cycle</Text>
+          <Switch
+            value={reminders}
+            onValueChange={(next) => void applyReminders(next, reminderHour)}
+            trackColor={{ true: colors.accent, false: colors.border }}
+          />
+        </View>
+        <Text style={styles.note}>
+          Two days before your window opens, on the day it opens, and a daily check-in nudge.
+          Scheduled on this phone — no server is involved and nothing is sent anywhere.
+        </Text>
+        {reminders && (
+          <>
+            <Text style={styles.switchLabel}>Time of day</Text>
+            <View style={styles.hourRow}>
+              {[8, 12, 17, 20, 22].map((hour) => (
+                <Pressable
+                  key={hour}
+                  style={[styles.hourChip, reminderHour === hour && styles.hourChipActive]}
+                  onPress={() => void applyReminders(true, hour)}
+                >
+                  <Text
+                    style={[
+                      styles.hourChipText,
+                      reminderHour === hour && styles.hourChipTextActive,
+                    ]}
+                  >
+                    {hour === 12 ? 'noon' : hour > 12 ? `${hour - 12}pm` : `${hour}am`}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Privacy</Text>
+        <View style={styles.switchRow}>
+          <Text style={styles.switchLabel}>Require unlock to open</Text>
+          <Switch
+            value={appLock}
+            onValueChange={(next) => {
+              setAppLockState(next);
+              void setAppLock(next);
+            }}
+            trackColor={{ true: colors.accent, false: colors.border }}
+          />
+        </View>
+        <Text style={styles.note}>
+          Uses your phone's own face, fingerprint or passcode. If your device has none set up, this
+          does nothing — it can't invent a lock of its own.
+        </Text>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardLabel}>Your data</Text>
         <Row label="Periods recorded" value={`${counts.cycles}`} />
         <Row label="Days with symptoms" value={`${counts.symptoms}`} />
         <Text style={styles.note}>
           All of it is stored on this device only. There is no account, no sync, and no analytics
-          with access to it. Deleting the app deletes the data — there is no export yet.
+          with access to it.
         </Text>
+        <Pressable style={styles.action} onPress={exportData} disabled={working === 'export'}>
+          <Text style={styles.actionText}>
+            {working === 'export' ? 'Preparing…' : 'Export everything as a file'}
+          </Text>
+        </Pressable>
+        <Pressable style={styles.action} onPress={confirmDeleteAll}>
+          <Text style={styles.actionDanger}>Delete all my data</Text>
+        </Pressable>
       </View>
 
       <View style={styles.card}>
@@ -244,6 +397,51 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     themeBlurb: {
       ...typography.micro,
       color: colors.textMuted,
+    },
+    switchRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    switchLabel: {
+      ...typography.body,
+      color: colors.text,
+      flex: 1,
+    },
+    hourRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    hourChip: {
+      borderColor: colors.border,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    hourChipActive: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    hourChipText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+    },
+    hourChipTextActive: {
+      color: colors.onAccent,
+    },
+    action: {
+      paddingVertical: spacing.sm,
+    },
+    actionText: {
+      ...typography.body,
+      color: colors.accent,
+    },
+    actionDanger: {
+      ...typography.body,
+      color: colors.accent,
+      opacity: 0.85,
     },
     row: {
       flexDirection: 'row',

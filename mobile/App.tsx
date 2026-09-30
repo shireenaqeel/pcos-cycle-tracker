@@ -22,6 +22,7 @@ import { InsightsScreen } from './src/screens/InsightsScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
 import { LogCycleScreen } from './src/screens/LogCycleScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { LockScreen } from './src/screens/LockScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SymptomHistoryScreen } from './src/screens/SymptomHistoryScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
@@ -77,6 +78,7 @@ function MainTabs() {
 }
 
 function AppShell({ profile }: { profile: UserProfile }) {
+  const [unlocked, setUnlocked] = useState(!profile.appLockEnabled);
   const colors = useThemeColors();
   const scheme = useColorScheme();
   const [fontsLoaded] = useFonts({
@@ -101,6 +103,15 @@ function AppShell({ profile }: { profile: UserProfile }) {
       >
         <ActivityIndicator color={colors.accent} />
       </View>
+    );
+  }
+
+  if (!unlocked) {
+    return (
+      <SafeAreaProvider>
+        <LockScreen onUnlock={() => setUnlocked(true)} />
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      </SafeAreaProvider>
     );
   }
 

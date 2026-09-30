@@ -14,6 +14,8 @@ interface DailySymptomLogRow {
   movement: string | null;
   food_note: string | null;
   other_note: string | null;
+  flow: string | null;
+  medications: string | null;
 }
 
 /** Derived from user and date so a day can only ever hold one entry. */
@@ -35,6 +37,8 @@ function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
     movement: row.movement as MovementLevel | null,
     foodNote: row.food_note,
     otherNote: row.other_note,
+    flow: row.flow as DailySymptomLog['flow'],
+    medications: row.medications,
   };
 }
 
@@ -72,13 +76,16 @@ export async function saveSymptomLog(input: {
   movement: MovementLevel | null;
   foodNote: string | null;
   otherNote: string | null;
+  flow: DailySymptomLog['flow'];
+  medications: string | null;
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR REPLACE INTO daily_symptom_log
        (id, user_id, date, symptom_tags, basal_temp, mood,
-        stress_level, hydration_glasses, sleep_hours, movement, food_note, other_note)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        stress_level, hydration_glasses, sleep_hours, movement, food_note, other_note,
+        flow, medications)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     symptomLogId(input.userId, input.date),
     input.userId,
     input.date,
@@ -90,7 +97,9 @@ export async function saveSymptomLog(input: {
     input.sleepHours,
     input.movement,
     input.foodNote,
-    input.otherNote
+    input.otherNote,
+    input.flow,
+    input.medications
   );
 }
 
