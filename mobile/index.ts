@@ -1,8 +1,13 @@
 import { registerRootComponent } from 'expo';
+import { createElement } from 'react';
 
 import App from './App';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
-registerRootComponent(App);
+// Wrapped at the root so a failure inside App — theming, fonts, the database —
+// reports what broke instead of showing a bare red box.
+function Root() {
+  return createElement(ErrorBoundary, null, createElement(App));
+}
+
+registerRootComponent(Root);

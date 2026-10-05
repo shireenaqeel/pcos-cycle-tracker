@@ -10,6 +10,7 @@ import { useFonts } from 'expo-font';
 import { Quicksand_600SemiBold, Quicksand_700Bold } from '@expo-google-fonts/quicksand';
 import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { getOrCreateProfile, setTheme } from './src/db/profile';
 import type { MainTabParamList, RootStackParamList } from './src/navigation/types';
 import { AccuracyScreen } from './src/screens/AccuracyScreen';
@@ -189,10 +190,18 @@ function AppShell({ profile }: { profile: UserProfile }) {
 
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadError, setLoadError] = useState<Error | null>(null);
 
   useEffect(() => {
-    getOrCreateProfile().then(setProfile);
+    getOrCreateProfile().then(setProfile, setLoadError);
   }, []);
+
+  // Opening the database runs migrations against whatever is already on the
+  // device. If that fails, say so plainly — an unhandled rejection here would
+  // otherwise surface as a bare red box with nothing to act on.
+  if (loadError !== null) {
+    throw loadError;
+  }
 
   // The palette has to be known before anything paints, or the first frame
   // renders in the wrong theme and then snaps.
