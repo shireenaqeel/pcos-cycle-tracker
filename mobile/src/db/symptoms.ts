@@ -33,8 +33,17 @@ function symptomLogId(userId: string, date: string): string {
   return `sym_${userId}_${date}`;
 }
 
-function parseList<T extends string>(raw: string | null): T[] {
-  return raw === null ? [] : (JSON.parse(raw) as T[]);
+/**
+ * A row's shape comes from the columns the database file actually has, which
+ * can lag the TypeScript type: a device whose database predates a migration
+ * returns `undefined` for the new column rather than null. Treat both as empty
+ * — this is a real boundary between stored data and code, not defensiveness
+ * against our own callers.
+ */
+function parseList<T extends string>(raw: string | null | undefined): T[] {
+  if (raw === null || raw === undefined || raw === '') return [];
+  const parsed = JSON.parse(raw) as unknown;
+  return Array.isArray(parsed) ? (parsed as T[]) : [];
 }
 
 /**
@@ -44,7 +53,7 @@ function parseList<T extends string>(raw: string | null): T[] {
 function moodsFor(row: DailySymptomLogRow): MoodTag[] {
   const stored = parseList<MoodTag>(row.moods);
   if (stored.length > 0) return stored;
-  return row.mood === null ? [] : [row.mood as MoodTag];
+  return row.mood === null || row.mood === undefined ? [] : [row.mood as MoodTag];
 }
 
 function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
@@ -52,7 +61,7 @@ function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
     id: row.id,
     userId: row.user_id,
     date: row.date,
-    symptomTags: JSON.parse(row.symptom_tags) as SymptomTag[],
+    symptomTags: parseList<SymptomTag>(row.symptom_tags),
     basalTemp: row.basal_temp,
     mood: row.mood,
     stressLevel: row.stress_level,

@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays, format, getHours } from 'date-fns';
 
 import { CycleRing } from '../components/CycleRing';
+import { Drift, FadeInUp } from '../components/Motion';
 import { Blob, Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
 import { listCycleLogs } from '../db/cycles';
 import { recordPredictionIfChanged } from '../db/predictions';
@@ -27,7 +28,7 @@ import {
   useThemedStyles,
   type ThemeColors,
 } from '../theme';
-import { MOOD_LABELS } from '../content/trackers';
+import { MOOD_LABELS, SYMPTOM_LABELS } from '../content/trackers';
 import type { CycleLog, CycleRangePrediction, DailySymptomLog, MoodTag } from '../types';
 
 type Props = CompositeScreenProps<
@@ -143,14 +144,18 @@ export function TodayScreen({ navigation }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.greetingBlock}>
+      <FadeInUp style={styles.greetingBlock}>
         <Text style={styles.greeting}>{greeting(name)}</Text>
         <Text style={styles.date}>{format(new Date(), 'EEEE, d MMMM')}</Text>
-      </View>
+      </FadeInUp>
 
-      <View style={styles.heroWrap}>
-        <Blob color={colors.petal} size={240} style={styles.blobOne} />
-        <Blob color={colors.lilac} size={180} style={styles.blobTwo} />
+      <FadeInUp delay={80} style={styles.heroWrap}>
+        <Drift amount={12} seconds={16} style={styles.blobOne}>
+          <Blob color={colors.petal} size={240} />
+        </Drift>
+        <Drift amount={9} seconds={21} style={styles.blobTwo}>
+          <Blob color={colors.lilac} size={180} />
+        </Drift>
 
         <LinearGradient
           colors={[colors.gradientFrom, colors.gradientTo]}
@@ -193,16 +198,16 @@ export function TodayScreen({ navigation }: Props) {
             </>
           )}
         </LinearGradient>
-      </View>
+      </FadeInUp>
 
-      <SoftCard>
+      <SoftCard delay={160}>
         <SectionLabel>How are you feeling?</SectionLabel>
         <View style={styles.wrap}>
           {QUICK_MOODS.map((mood) => (
             <Chip
               key={mood}
               label={MOOD_LABELS[mood]}
-              selected={today?.moods.includes(mood) ?? false}
+              selected={today?.moods?.includes(mood) ?? false}
               onPress={() => setMood(mood)}
             />
           ))}
@@ -212,7 +217,20 @@ export function TodayScreen({ navigation }: Props) {
         </Text>
       </SoftCard>
 
-      <View style={styles.tileRow}>
+      {today !== null && today.symptomTags.length > 0 && (
+        <SoftCard delay={200} tint={colors.apricot}>
+          <SectionLabel>Noted today</SectionLabel>
+          <View style={styles.wrap}>
+            {today.symptomTags.slice(0, 8).map((tag) => (
+              <View key={tag} style={styles.noteChip}>
+                <Text style={styles.noteChipText}>{SYMPTOM_LABELS[tag]}</Text>
+              </View>
+            ))}
+          </View>
+        </SoftCard>
+      )}
+
+      <FadeInUp delay={240} style={styles.tileRow}>
         <Tile
           label={bleedingToday ? 'Period logged' : 'Period started'}
           tint={colors.petal}
@@ -223,10 +241,10 @@ export function TodayScreen({ navigation }: Props) {
           tint={colors.sage}
           onPress={() => navigation.navigate('CheckIn', {})}
         />
-      </View>
+      </FadeInUp>
 
       {prediction !== null && (
-        <SoftCard>
+        <SoftCard delay={300}>
           <SectionLabel>What this is based on</SectionLabel>
           <Text style={styles.cardBody}>
             {cycles.length} recorded {cycles.length === 1 ? 'period' : 'periods'}, giving a typical
@@ -240,7 +258,7 @@ export function TodayScreen({ navigation }: Props) {
       )}
 
       {cycles.length > 0 && (
-        <SoftCard>
+        <SoftCard delay={360}>
           <SectionLabel>Recent periods</SectionLabel>
           {[...cycles]
             .reverse()
@@ -373,6 +391,16 @@ const makeStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: spacing.sm,
+    },
+    noteChip: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+    },
+    noteChipText: {
+      ...typography.caption,
+      color: colors.text,
     },
     quickNote: {
       ...typography.micro,

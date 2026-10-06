@@ -1,5 +1,14 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  LayoutAnimation,
+  PanResponder,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { tapFeedback } from '../lib/feedback';
 import {
@@ -11,122 +20,180 @@ import {
   type ThemeColors,
 } from '../theme';
 
-/** Glasses that fill as you tap them — tapping the one already filled empties back to it. */
-export function WaterGlasses({
+const TRACK_HEIGHT = 46;
+
+/**
+ * Water as one filling bar rather than a wrapping row of glasses.
+ *
+ * Tap anywhere on the bar to set the amount, or use the ends to nudge it. The
+ * previous version was ten tappable glasses that wrapped onto two lines and
+ * took up a third of the card for a number between zero and ten.
+ */
+export function WaterMeter({
   count,
   onChange,
-  total = 10,
+  target = 8,
 }: {
   count: number;
   onChange: (next: number) => void;
-  total?: number;
+  target?: number;
 }) {
   const styles = useThemedStyles(makeStyles);
-
-  return (
-    <View style={styles.glassRow}>
-      {Array.from({ length: total }, (_, index) => index + 1).map((position) => (
-        <Glass
-          key={position}
-          filled={position <= count}
-          onPress={() => {
-            tapFeedback();
-            onChange(count === position ? position - 1 : position);
-          }}
-        />
-      ))}
-    </View>
-  );
-}
-
-function Glass({ filled, onPress }: { filled: boolean; onPress: () => void }) {
-  const styles = useThemedStyles(makeStyles);
-  const colors = useThemeColors();
-  const level = useRef(new Animated.Value(filled ? 1 : 0)).current;
+  const [trackWidth, setTrackWidth] = useState(0);
+  const fill = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.spring(level, { toValue: filled ? 1 : 0, useNativeDriver: false, speed: 14 }).start();
-  }, [filled, level]);
+    Animated.spring(fill, {
+      toValue: Math.min(count / target, 1),
+      useNativeDriver: false,
+      speed: 14,
+      bounciness: 6,
+    }).start();
+  }, [count, target, fill]);
+
+  function setFromX(x: number) {
+    if (trackWidth === 0) return;
+    const next = Math.round((x / trackWidth) * target);
+    const clamped = Math.max(0, Math.min(target + 4, next));
+    if (clamped !== count) {
+      tapFeedback();
+      onChange(clamped);
+    }
+  }
 
   return (
-    <Pressable onPress={onPress} hitSlop={4}>
-      <View style={styles.glass}>
+    <View style={styles.meterRow}>
+      <Pressable
+        hitSlop={8}
+        style={styles.nudge}
+        onPress={() => {
+          tapFeedback();
+          onChange(Math.max(0, count - 1));
+        }}
+      >
+        <Text style={styles.nudgeText}>−</Text>
+      </Pressable>
+
+      <Pressable
+        style={styles.track}
+        onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+        onPress={(event) => setFromX(event.nativeEvent.locationX)}
+      >
         <Animated.View
           style={[
-            styles.glassFill,
+            styles.trackFill,
             {
-              backgroundColor: colors.accent,
-              height: level.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+              width: fill.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '100%'],
+              }),
             },
           ]}
         />
-      </View>
-    </Pressable>
-  );
-}
-
-/**
- * Hours as tappable bars. A row of bars reads as an amount at a glance, which a
- * plus/minus counter never does, and half hours stay reachable via the toggle.
- */
-export function SleepBars({
-  hours,
-  onChange,
-}: {
-  hours: number;
-  onChange: (next: number) => void;
-}) {
-  const styles = useThemedStyles(makeStyles);
-  const whole = Math.floor(hours);
-  const hasHalf = hours - whole >= 0.5;
-
-  return (
-    <View style={styles.sleepWrap}>
-      <View style={styles.barRow}>
-        {Array.from({ length: 10 }, (_, index) => index + 3).map((hour) => {
-          const active = hour <= whole;
-          return (
-            <Pressable
-              key={hour}
-              style={styles.barTouch}
-              onPress={() => {
-                tapFeedback();
-                onChange(whole === hour && !hasHalf ? 0 : hour);
-              }}
-            >
-              <View
-                style={[
-                  styles.bar,
-                  { height: 24 + (hour - 3) * 7 },
-                  active && styles.barActive,
-                ]}
-              />
-              <Text style={[styles.barLabel, active && styles.barLabelActive]}>{hour}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+        <Text style={styles.trackLabel}>
+          {count === 0 ? 'none yet' : `${count} glass${count === 1 ? '' : 'es'}`}
+        </Text>
+      </Pressable>
 
       <Pressable
-        style={[styles.halfToggle, hasHalf && styles.halfToggleActive]}
+        hitSlop={8}
+        style={styles.nudge}
         onPress={() => {
           tapFeedback();
-          onChange(hasHalf ? whole : whole + 0.5);
+          onChange(count + 1);
         }}
       >
-        <Text style={[styles.halfToggleText, hasHalf && styles.halfToggleTextActive]}>
-          + 30 minutes
-        </Text>
+        <Text style={styles.nudgeText}>+</Text>
       </Pressable>
     </View>
   );
 }
 
 /**
- * Stress as a blob that swells and warms as the level rises, with the number
- * kept alongside so the feeling and the value are both legible.
+ * Sleep as a draggable slider. Dragging a single row to "about seven and a
+ * half" is both quicker and a better match for how roughly people know this
+ * than tapping one of ten bars and then a half-hour toggle.
  */
-export function StressBlob({
+export function SleepSlider({
+  hours,
+  onChange,
+  min = 0,
+  max = 12,
+}: {
+  hours: number;
+  onChange: (next: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  const styles = useThemedStyles(makeStyles);
+  const [trackWidth, setTrackWidth] = useState(0);
+  const widthRef = useRef(0);
+  const latest = useRef(hours);
+  latest.current = hours;
+
+  /** Snaps to half hours: finer than that is false precision about sleep. */
+  function valueFromX(x: number): number {
+    const width = widthRef.current;
+    if (width === 0) return latest.current;
+    const ratio = Math.max(0, Math.min(1, x / width));
+    return Math.round((min + ratio * (max - min)) * 2) / 2;
+  }
+
+  const responder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (event) => {
+        const next = valueFromX(event.nativeEvent.locationX);
+        if (next !== latest.current) {
+          tapFeedback();
+          onChange(next);
+        }
+      },
+      onPanResponderMove: (event, gesture) => {
+        const next = valueFromX(event.nativeEvent.locationX + gesture.dx * 0);
+        if (next !== latest.current) onChange(next);
+      },
+    })
+  ).current;
+
+  const ratio = (hours - min) / (max - min);
+
+  return (
+    <View style={styles.sliderWrap}>
+      <View
+        style={styles.track}
+        onLayout={(event) => {
+          widthRef.current = event.nativeEvent.layout.width;
+          setTrackWidth(event.nativeEvent.layout.width);
+        }}
+        {...responder.panHandlers}
+      >
+        <View style={[styles.trackFill, { width: `${Math.max(0, Math.min(1, ratio)) * 100}%` }]} />
+        {trackWidth > 0 && (
+          <View
+            style={[
+              styles.thumb,
+              { left: Math.max(0, Math.min(trackWidth - 22, ratio * trackWidth - 11)) },
+            ]}
+          />
+        )}
+      </View>
+      <Text style={styles.sliderValue}>
+        {hours === 0 ? 'not recorded' : `${hours} hour${hours === 1 ? '' : 's'}`}
+      </Text>
+    </View>
+  );
+}
+
+const STRESS_WORDS = ['calm', 'steady', 'busy', 'frayed', 'overwhelmed'];
+
+/**
+ * Stress as five segments in one row. The chosen one widens and the whole row
+ * warms from sage to petal, so the reading is legible from the colour alone —
+ * and it occupies a single line instead of a 120px blob plus a button row.
+ */
+export function StressScale({
   level,
   onChange,
 }: {
@@ -135,169 +202,112 @@ export function StressBlob({
 }) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
-  const size = useRef(new Animated.Value(level ?? 1)).current;
-
-  useEffect(() => {
-    Animated.spring(size, { toValue: level ?? 1, useNativeDriver: false, speed: 12 }).start();
-  }, [level, size]);
-
   const tints = [colors.sage, colors.sage, colors.apricot, colors.apricot, colors.petal];
 
   return (
-    <View style={styles.stressWrap}>
-      <Animated.View
-        style={[
-          styles.stressBlob,
-          {
-            backgroundColor: level === null ? colors.border : tints[level - 1],
-            transform: [
-              { scale: size.interpolate({ inputRange: [1, 5], outputRange: [0.75, 1.25] }) },
-            ],
-          },
-        ]}
-      >
-        <Text style={styles.stressValue}>{level === null ? '–' : level}</Text>
-      </Animated.View>
-
-      <View style={styles.stressButtons}>
-        {[1, 2, 3, 4, 5].map((value) => (
-          <Pressable
-            key={value}
-            style={[styles.stressDot, level === value && styles.stressDotActive]}
-            onPress={() => {
-              tapFeedback();
-              onChange(level === value ? null : value);
-            }}
-          >
-            <Text style={[styles.stressDotText, level === value && styles.stressDotTextActive]}>
-              {value}
-            </Text>
-          </Pressable>
-        ))}
+    <View style={styles.scaleWrap}>
+      <View style={styles.segmentRow}>
+        {[1, 2, 3, 4, 5].map((value) => {
+          const selected = level === value;
+          return (
+            <Pressable
+              key={value}
+              style={[
+                styles.segment,
+                selected && styles.segmentSelected,
+                { backgroundColor: level !== null && value <= level ? tints[level - 1] : colors.border },
+              ]}
+              onPress={() => {
+                tapFeedback();
+                LayoutAnimation.configureNext({
+                  duration: 220,
+                  update: { type: LayoutAnimation.Types.easeInEaseOut },
+                });
+                onChange(selected ? null : value);
+              }}
+            />
+          );
+        })}
       </View>
-      <View style={styles.stressLabels}>
-        <Text style={styles.stressLabel}>calm</Text>
-        <Text style={styles.stressLabel}>overwhelmed</Text>
-      </View>
+      <Text style={styles.scaleWord}>
+        {level === null ? 'tap to set' : STRESS_WORDS[level - 1]}
+      </Text>
     </View>
   );
 }
 
 const makeStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    glassRow: {
+    meterRow: {
+      alignItems: 'center',
       flexDirection: 'row',
-      flexWrap: 'wrap',
       gap: spacing.sm,
-      justifyContent: 'center',
     },
-    glass: {
+    nudge: {
+      alignItems: 'center',
       backgroundColor: colors.surface,
-      borderBottomLeftRadius: radius.sm,
-      borderBottomRightRadius: radius.sm,
-      borderColor: colors.accent,
-      borderWidth: 1.5,
-      height: 52,
-      justifyContent: 'flex-end',
-      overflow: 'hidden',
-      width: 30,
-    },
-    glassFill: {
-      width: '100%',
-    },
-    sleepWrap: {
-      alignItems: 'center',
-      gap: spacing.md,
-    },
-    barRow: {
-      alignItems: 'flex-end',
-      flexDirection: 'row',
-      gap: spacing.xs,
+      borderRadius: radius.pill,
+      height: 38,
       justifyContent: 'center',
+      width: 38,
     },
-    barTouch: {
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
-    bar: {
-      backgroundColor: colors.border,
-      borderRadius: radius.sm,
-      width: 20,
-    },
-    barActive: {
-      backgroundColor: colors.accent,
-    },
-    barLabel: {
-      ...typography.micro,
-      color: colors.textFaint,
-    },
-    barLabelActive: {
+    nudgeText: {
+      ...typography.heading,
       color: colors.accent,
     },
-    halfToggle: {
-      borderColor: colors.border,
+    track: {
+      backgroundColor: colors.border,
       borderRadius: radius.pill,
-      borderWidth: 1.5,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
+      flex: 1,
+      height: TRACK_HEIGHT,
+      justifyContent: 'center',
+      overflow: 'hidden',
     },
-    halfToggleActive: {
-      backgroundColor: colors.accentSoft,
-      borderColor: colors.accent,
+    trackFill: {
+      backgroundColor: colors.accent,
+      bottom: 0,
+      left: 0,
+      position: 'absolute',
+      top: 0,
     },
-    halfToggleText: {
+    trackLabel: {
+      ...typography.bodySmall,
+      color: colors.text,
+      textAlign: 'center',
+    },
+    sliderWrap: {
+      gap: spacing.sm,
+    },
+    thumb: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.pill,
+      height: 22,
+      position: 'absolute',
+      width: 22,
+    },
+    sliderValue: {
       ...typography.bodySmall,
       color: colors.textMuted,
+      textAlign: 'center',
     },
-    halfToggleTextActive: {
-      color: colors.accent,
-    },
-    stressWrap: {
-      alignItems: 'center',
-      gap: spacing.md,
-    },
-    stressBlob: {
-      alignItems: 'center',
-      borderRadius: radius.pill,
-      height: 120,
-      justifyContent: 'center',
-      width: 120,
-    },
-    stressValue: {
-      ...typography.metric,
-      color: colors.text,
-    },
-    stressButtons: {
-      flexDirection: 'row',
+    scaleWrap: {
       gap: spacing.sm,
     },
-    stressDot: {
-      alignItems: 'center',
-      borderColor: colors.border,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      height: 44,
-      justifyContent: 'center',
-      width: 44,
-    },
-    stressDotActive: {
-      backgroundColor: colors.accent,
-      borderColor: colors.accent,
-    },
-    stressDotText: {
-      ...typography.body,
-      color: colors.textMuted,
-    },
-    stressDotTextActive: {
-      color: colors.onAccent,
-    },
-    stressLabels: {
+    segmentRow: {
       flexDirection: 'row',
-      gap: spacing.xl,
-      justifyContent: 'space-between',
+      gap: spacing.xs,
+      height: 38,
     },
-    stressLabel: {
-      ...typography.micro,
-      color: colors.textFaint,
+    segment: {
+      borderRadius: radius.pill,
+      flex: 1,
+    },
+    segmentSelected: {
+      flex: 2.2,
+    },
+    scaleWord: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      textAlign: 'center',
     },
   });

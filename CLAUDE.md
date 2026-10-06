@@ -799,3 +799,43 @@ Rules that make this safe to ship, and that must hold:
   needs no cycle average to be worth raising.
 - When nothing trips, the screen says what was checked **and** that this is not
   a clean bill of health — it cannot see what was never logged.
+
+## Motion
+
+`components/Motion.tsx` has the two primitives everything uses:
+
+- `FadeInUp` — rises 14px and fades over 340ms. `SoftCard` applies it by
+  default, and passing `delay` staggers a column so a screen assembles rather
+  than appearing whole. Kept short deliberately: longer is in the way of
+  someone who opened the app to log one thing.
+- `Drift` — a barely-perceptible loop for the blobs behind a hero. Enough that
+  the screen isn't a still image, not enough to pull the eye off the numbers.
+
+`CycleRing` sweeps its elapsed arc out on mount. The animation drives
+`strokeDashoffset`, which is a plain number and so interpolatable; a
+`strokeDasharray` string is not, which is why the arc is drawn as a full-circle
+dash with a moving offset.
+
+## Check-in controls are compact on purpose
+
+`components/CheckInControls.tsx` replaced three tall controls with three
+single-row ones, because the sheet is long and these were eating it:
+
+- `WaterMeter` — one filling bar, tap anywhere to set, ends to nudge. Was ten
+  tappable glasses that wrapped onto two lines.
+- `SleepSlider` — drag, snapping to half hours. Finer than that is false
+  precision about sleep, and dragging matches how roughly people know it.
+- `StressScale` — five segments in a row; the chosen one widens and the row
+  warms sage → apricot → petal, so it reads from colour alone. Was a 120px
+  blob plus a row of numbered buttons.
+
+`Stepper` and `ScaleDots` were deleted rather than left behind.
+
+### Parsing rows from an older database
+
+`parseList` in `db/symptoms.ts` treats `undefined` like null. A row's shape
+comes from the columns the database file actually has, which can lag the
+TypeScript type — a device whose database predates a migration returns
+`undefined` for the new column, and `list.includes(...)` on that threw at
+startup. This is a genuine boundary between stored data and code, not
+defensiveness against our own callers.

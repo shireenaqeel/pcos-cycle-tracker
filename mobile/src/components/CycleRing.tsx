@@ -1,5 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 import { ringGeometry } from '../lib/ring';
 import { spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
@@ -32,6 +35,22 @@ export function CycleRing({ cycleDay, windowStartDay, windowEndDay, caption, hea
   const colors = useThemeColors();
   const ring = ringGeometry({ cycleDay, windowStartDay, windowEndDay });
 
+  // Sweeps the elapsed arc out from the top rather than snapping to its final
+  // length. Driven through strokeDashoffset, which is a plain number and so can
+  // be interpolated; a dasharray string cannot.
+  const sweep = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    sweep.setValue(0);
+    Animated.timing(sweep, {
+      toValue: ring.elapsedFraction,
+      duration: 1100,
+      delay: 120,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [ring.elapsedFraction, sweep]);
+
   return (
     <View style={styles.container}>
       <Svg width={SIZE} height={SIZE}>
@@ -55,7 +74,7 @@ export function CycleRing({ cycleDay, windowStartDay, windowEndDay, caption, hea
             strokeLinecap="butt"
             {...arcProps(ring.windowStartFraction, ring.windowEndFraction)}
           />
-          <Circle
+          <AnimatedCircle
             cx={SIZE / 2}
             cy={SIZE / 2}
             r={RADIUS}
@@ -63,7 +82,11 @@ export function CycleRing({ cycleDay, windowStartDay, windowEndDay, caption, hea
             strokeWidth={STROKE}
             fill="none"
             strokeLinecap="round"
-            {...arcProps(0, ring.elapsedFraction)}
+            strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+            strokeDashoffset={sweep.interpolate({
+              inputRange: [0, 1],
+              outputRange: [CIRCUMFERENCE, 0],
+            })}
           />
         </G>
       </Svg>

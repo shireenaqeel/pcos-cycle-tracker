@@ -4,7 +4,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, isToday } from 'date-fns';
 
-import { SleepBars, StressBlob, WaterGlasses } from '../components/CheckInControls';
+import { SleepSlider, StressScale, WaterMeter } from '../components/CheckInControls';
+import { FadeInUp } from '../components/Motion';
 import { Blob, Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
 import {
   DISCHARGE_OPTIONS,
@@ -250,17 +251,17 @@ export function CheckInScreen({ navigation, route }: Props) {
 
         <SoftCard tint={colors.apricot}>
           <SectionLabel>Stress</SectionLabel>
-          <StressBlob level={stress} onChange={setStress} />
+          <StressScale level={stress} onChange={setStress} />
         </SoftCard>
 
         <SoftCard tint={colors.sage}>
           <SectionLabel>Water</SectionLabel>
-          <WaterGlasses count={hydration} onChange={setHydration} />
+          <WaterMeter count={hydration} onChange={setHydration} />
         </SoftCard>
 
         <SoftCard>
           <SectionLabel>Sleep</SectionLabel>
-          <SleepBars hours={sleep} onChange={setSleep} />
+          <SleepSlider hours={sleep} onChange={setSleep} />
         </SoftCard>
 
         <SoftCard>

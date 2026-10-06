@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { FadeInUp } from './Motion';
 import { tapFeedback } from '../lib/feedback';
 import {
   radius,
@@ -20,18 +21,28 @@ import {
   type ThemeColors,
 } from '../theme';
 
-/** A rounded panel. Tint it to give a section its own colour rather than another white box. */
+/**
+ * A rounded panel. Tint it to give a section its own colour rather than another
+ * white box. Rises into place on mount; pass a `delay` to stagger a column of
+ * them so a screen assembles instead of appearing all at once.
+ */
 export function SoftCard({
   children,
   tint,
   style,
+  delay = 0,
 }: {
   children: React.ReactNode;
   tint?: string;
   style?: StyleProp<ViewStyle>;
+  delay?: number;
 }) {
   const styles = useThemedStyles(makeStyles);
-  return <View style={[styles.card, tint !== undefined && { backgroundColor: tint }, style]}>{children}</View>;
+  return (
+    <FadeInUp delay={delay} style={style}>
+      <View style={[styles.card, tint !== undefined && { backgroundColor: tint }]}>{children}</View>
+    </FadeInUp>
+  );
 }
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -105,84 +116,6 @@ export function Chip({
   );
 }
 
-/** Plus/minus counter for the things people log as a number of somethings. */
-export function Stepper({
-  value,
-  onChange,
-  suffix,
-  step = 1,
-  max = 30,
-  format,
-}: {
-  value: number;
-  onChange: (next: number) => void;
-  suffix: string;
-  step?: number;
-  max?: number;
-  format?: (value: number) => string;
-}) {
-  const styles = useThemedStyles(makeStyles);
-
-  return (
-    <View style={styles.stepper}>
-      <Squish onPress={() => onChange(Math.max(0, Number((value - step).toFixed(1))))}>
-        <View style={styles.stepperButton}>
-          <Text style={styles.stepperSymbol}>−</Text>
-        </View>
-      </Squish>
-      <View style={styles.stepperValue}>
-        <Text style={styles.stepperNumber}>{format === undefined ? value : format(value)}</Text>
-        <Text style={styles.stepperSuffix}>{suffix}</Text>
-      </View>
-      <Squish onPress={() => onChange(Math.min(max, Number((value + step).toFixed(1))))}>
-        <View style={styles.stepperButton}>
-          <Text style={styles.stepperSymbol}>+</Text>
-        </View>
-      </Squish>
-    </View>
-  );
-}
-
-/** 1-5 selector used for stress, shown as growing dots rather than numbers. */
-export function ScaleDots({
-  value,
-  onChange,
-  lowLabel,
-  highLabel,
-}: {
-  value: number | null;
-  onChange: (next: number | null) => void;
-  lowLabel: string;
-  highLabel: string;
-}) {
-  const styles = useThemedStyles(makeStyles);
-
-  return (
-    <View style={styles.scaleWrap}>
-      <View style={styles.scaleRow}>
-        {[1, 2, 3, 4, 5].map((level) => {
-          const active = value !== null && level <= value;
-          return (
-            <Squish key={level} onPress={() => onChange(value === level ? null : level)}>
-              <View
-                style={[
-                  styles.scaleDot,
-                  { height: 18 + level * 5, width: 18 + level * 5 },
-                  active && styles.scaleDotActive,
-                ]}
-              />
-            </Squish>
-          );
-        })}
-      </View>
-      <View style={styles.scaleLabels}>
-        <Text style={styles.scaleLabel}>{lowLabel}</Text>
-        <Text style={styles.scaleLabel}>{highLabel}</Text>
-      </View>
-    </View>
-  );
-}
-
 /**
  * A soft organic shape for screen backgrounds. Hand-tuned bezier rather than a
  * circle, so the app has something in it that isn't a rounded rectangle.
@@ -236,62 +169,5 @@ const makeStyles = (colors: ThemeColors) =>
     chipText: {
       ...typography.bodySmall,
       color: colors.textMuted,
-    },
-    stepper: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: spacing.md,
-      justifyContent: 'center',
-    },
-    stepperButton: {
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      height: 46,
-      justifyContent: 'center',
-      width: 46,
-    },
-    stepperSymbol: {
-      ...typography.heading,
-      color: colors.accent,
-    },
-    stepperValue: {
-      alignItems: 'center',
-      minWidth: 96,
-    },
-    stepperNumber: {
-      ...typography.metric,
-      color: colors.text,
-    },
-    stepperSuffix: {
-      ...typography.caption,
-      color: colors.textMuted,
-    },
-    scaleWrap: {
-      gap: spacing.sm,
-    },
-    scaleRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: spacing.sm,
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.xs,
-    },
-    scaleDot: {
-      backgroundColor: colors.border,
-      borderRadius: radius.pill,
-    },
-    scaleDotActive: {
-      backgroundColor: colors.accent,
-    },
-    scaleLabels: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    scaleLabel: {
-      ...typography.micro,
-      color: colors.textFaint,
     },
   });
