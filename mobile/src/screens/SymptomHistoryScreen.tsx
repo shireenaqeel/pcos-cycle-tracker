@@ -7,23 +7,13 @@ import { format } from 'date-fns';
 import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { checkInLines, isCheckInEmpty } from '../lib/checkInSummary';
+import { SYMPTOM_LABELS } from '../content/trackers';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SymptomHistory'>;
-
-const TAG_LABELS: Record<SymptomTag, string> = {
-  cramps: 'Cramps',
-  fatigue: 'Fatigue',
-  cravings: 'Cravings',
-  mood_swing: 'Mood swings',
-  acne: 'Acne',
-  hair_thinning: 'Hair thinning',
-  hirsutism: 'Excess hair growth',
-  ovulation_pain: 'Ovulation pain',
-};
 
 export function SymptomHistoryScreen({ navigation }: Props) {
   const styles = useThemedStyles(makeStyles);
@@ -74,7 +64,7 @@ export function SymptomHistoryScreen({ navigation }: Props) {
 
           {entry.symptomTags.length > 0 && (
             <Text style={styles.tags}>
-              {entry.symptomTags.map((tag) => TAG_LABELS[tag]).join(' · ')}
+              {entry.symptomTags.map((tag) => SYMPTOM_LABELS[tag]).join(' · ')}
             </Text>
           )}
 

@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -37,7 +37,10 @@ CREATE TABLE IF NOT EXISTS daily_symptom_log (
   food_note TEXT,
   other_note TEXT,
   flow TEXT,
-  medications TEXT
+  medications TEXT,
+  moods TEXT,
+  discharge TEXT,
+  sex TEXT
 );
 
 CREATE TABLE IF NOT EXISTS prediction_snapshot (
@@ -91,6 +94,16 @@ export const MIGRATIONS: { toVersion: number; columns: { table: string; column: 
       // and cycle_log.flow_intensity can only hold one answer for all of it.
       { table: 'daily_symptom_log', column: 'flow', type: 'TEXT' },
       { table: 'daily_symptom_log', column: 'medications', type: 'TEXT' },
+    ],
+  },
+  {
+    toVersion: 5,
+    columns: [
+      // Moods are plural: people are routinely tired *and* irritable, and the
+      // single `mood` column could only hold one of them.
+      { table: 'daily_symptom_log', column: 'moods', type: 'TEXT' },
+      { table: 'daily_symptom_log', column: 'discharge', type: 'TEXT' },
+      { table: 'daily_symptom_log', column: 'sex', type: 'TEXT' },
     ],
   },
 ];

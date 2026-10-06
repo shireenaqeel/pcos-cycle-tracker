@@ -747,3 +747,55 @@ it works normally. **Never move that back to a static import.**
 
 This is the first feature that genuinely needs a development or production
 build rather than Expo Go.
+
+## Daily logging taxonomy
+
+`content/trackers.ts` holds every option a day can record, grouped: bleeding
+(including spotting and clots), twenty moods, symptoms under Pain / Gut /
+Energy and sleep / Skin and hair / Other, discharge, sex and drive, movement,
+plus stress, water, sleep, medication and notes.
+
+Breadth is the point. Mainstream trackers offer north of seventy options, and
+a short list is actively worse than a long one: a symptom with nowhere to go
+is a symptom someone stops logging. Grouping carries as much weight as breadth
+— thirty undifferentiated chips is a wall, the same thirty under headings is
+scannable.
+
+Moods are **plural** (schema v5). People are routinely tired *and* irritable,
+and the old single `mood` column could hold only one. Rows written before the
+change surface their single value as a one-item list so older days don't read
+as empty.
+
+Labels live in one place and are imported; three screens previously each kept
+their own copy of the symptom label map.
+
+### The check-in is one sheet, not a wizard
+
+It was briefly ten forced steps. That is tolerable on a first run and tedious
+every day after, and it buried whichever single thing the app was opened to
+record. It is now one scrollable sheet of grouped sections with a pinned save
+bar — the shape every established tracker converged on.
+
+## Clinical flags
+
+`engine/clinical.ts` compares recorded history against published thresholds
+and names what a clinician would want to hear about: no period for 90+ days,
+cycles repeatedly over 35 or under 21 days, a shortest-to-longest spread over
+9 days, fewer than 8 periods in a tracked year, periods running past 8 days,
+repeated heavy or clotted days.
+
+Rules that make this safe to ship, and that must hold:
+
+- **Every flag cites the guideline its threshold comes from** and states the
+  finding in the person's own numbers, so it can be checked rather than
+  believed.
+- **No flag may assert a condition.** Wording is "worth raising", never "you
+  have". A test asserts no flag text matches `you have PCOS`.
+- **The bar for speaking is high.** Cycle-length rules need at least three
+  measured cycles and two offending cycles; the periods-per-year rule needs a
+  year of history. With two cycles almost any history looks irregular, and
+  frightening someone over three data points is worse than silence.
+- Absence and bleeding-duration flags stand alone, since a three-month gap
+  needs no cycle average to be worth raising.
+- When nothing trips, the screen says what was checked **and** that this is not
+  a clean bill of health — it cannot see what was never logged.

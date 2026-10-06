@@ -29,16 +29,75 @@ export interface CycleLog {
 }
 
 export type SymptomTag =
-  | 'acne'
-  | 'hirsutism'
-  | 'hair_thinning'
   | 'cramps'
+  | 'headache'
+  | 'migraine'
+  | 'backache'
+  | 'joint_pain'
+  | 'breast_tenderness'
+  | 'ovulation_pain'
+  | 'pain_during_sex'
+  | 'bloating'
+  | 'nausea'
   | 'cravings'
+  | 'appetite_loss'
+  | 'constipation'
+  | 'diarrhoea'
+  | 'indigestion'
   | 'fatigue'
-  | 'mood_swing'
-  | 'ovulation_pain';
+  | 'insomnia'
+  | 'oversleeping'
+  | 'dizziness'
+  | 'sugar_crash'
+  | 'acne'
+  | 'oily_skin'
+  | 'dry_skin'
+  | 'hair_thinning'
+  | 'hirsutism'
+  | 'skin_darkening'
+  | 'skin_tags'
+  | 'hot_flush'
+  | 'night_sweats'
+  | 'heart_racing'
+  | 'swelling'
+  | 'weight_change';
 
-export type FlowIntensity = 'light' | 'medium' | 'heavy';
+export type MoodTag =
+  | 'calm'
+  | 'happy'
+  | 'energetic'
+  | 'playful'
+  | 'confident'
+  | 'content'
+  | 'tired'
+  | 'flat'
+  | 'sad'
+  | 'low_self_esteem'
+  | 'irritable'
+  | 'angry'
+  | 'anxious'
+  | 'overwhelmed'
+  | 'mood_swings'
+  | 'weepy'
+  | 'restless'
+  | 'foggy'
+  | 'unmotivated'
+  | 'detached';
+
+export type DischargeType =
+  | 'none'
+  | 'dry'
+  | 'sticky'
+  | 'creamy'
+  | 'watery'
+  | 'egg_white'
+  | 'clumpy'
+  | 'grey'
+  | 'unusual_smell';
+
+export type SexTag = 'none' | 'protected' | 'unprotected' | 'solo' | 'high_drive' | 'low_drive';
+
+export type FlowIntensity = 'spotting' | 'light' | 'medium' | 'heavy' | 'clots';
 
 export type MovementLevel = 'none' | 'light' | 'moderate' | 'intense';
 
@@ -53,7 +112,11 @@ export interface DailySymptomLog {
   date: string;
   symptomTags: SymptomTag[];
   basalTemp: number | null;
+  /** Free-text single mood from before moods became multi-select; read-only now. */
   mood: string | null;
+  moods: MoodTag[];
+  discharge: DischargeType | null;
+  sex: SexTag[];
   /** 1 (calm) to 5 (overwhelmed). */
   stressLevel: number | null;
   hydrationGlasses: number | null;

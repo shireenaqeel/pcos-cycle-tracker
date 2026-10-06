@@ -1,5 +1,12 @@
 import { getDb } from './client';
-import type { DailySymptomLog, MovementLevel, SymptomTag } from '../types';
+import type {
+  DailySymptomLog,
+  DischargeType,
+  MoodTag,
+  MovementLevel,
+  SexTag,
+  SymptomTag,
+} from '../types';
 
 interface DailySymptomLogRow {
   id: string;
@@ -16,11 +23,28 @@ interface DailySymptomLogRow {
   other_note: string | null;
   flow: string | null;
   medications: string | null;
+  moods: string | null;
+  discharge: string | null;
+  sex: string | null;
 }
 
 /** Derived from user and date so a day can only ever hold one entry. */
 function symptomLogId(userId: string, date: string): string {
   return `sym_${userId}_${date}`;
+}
+
+function parseList<T extends string>(raw: string | null): T[] {
+  return raw === null ? [] : (JSON.parse(raw) as T[]);
+}
+
+/**
+ * Days logged before moods became multi-select hold a single value in `mood`.
+ * Those are surfaced as a one-item list so older entries don't read as empty.
+ */
+function moodsFor(row: DailySymptomLogRow): MoodTag[] {
+  const stored = parseList<MoodTag>(row.moods);
+  if (stored.length > 0) return stored;
+  return row.mood === null ? [] : [row.mood as MoodTag];
 }
 
 function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
@@ -39,6 +63,9 @@ function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
     otherNote: row.other_note,
     flow: row.flow as DailySymptomLog['flow'],
     medications: row.medications,
+    moods: moodsFor(row),
+    discharge: row.discharge as DischargeType | null,
+    sex: parseList<SexTag>(row.sex),
   };
 }
 
@@ -78,14 +105,17 @@ export async function saveSymptomLog(input: {
   otherNote: string | null;
   flow: DailySymptomLog['flow'];
   medications: string | null;
+  moods: MoodTag[];
+  discharge: DischargeType | null;
+  sex: SexTag[];
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR REPLACE INTO daily_symptom_log
        (id, user_id, date, symptom_tags, basal_temp, mood,
         stress_level, hydration_glasses, sleep_hours, movement, food_note, other_note,
-        flow, medications)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        flow, medications, moods, discharge, sex)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     symptomLogId(input.userId, input.date),
     input.userId,
     input.date,
@@ -99,7 +129,10 @@ export async function saveSymptomLog(input: {
     input.foodNote,
     input.otherNote,
     input.flow,
-    input.medications
+    input.medications,
+    JSON.stringify(input.moods),
+    input.discharge,
+    JSON.stringify(input.sex)
   );
 }
 

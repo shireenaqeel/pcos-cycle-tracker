@@ -35,6 +35,9 @@ function day(
     otherNote: null,
     flow: null,
     medications: null,
+    moods: [],
+    discharge: null,
+    sex: [],
   };
 }
 

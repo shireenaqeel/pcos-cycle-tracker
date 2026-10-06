@@ -5,25 +5,16 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { SYMPTOM_LABELS } from '../content/trackers';
 import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
+import { clinicalReview, type ClinicalReview } from '../engine/clinical';
 import { phaseInsights, type PhaseInsights } from '../engine/phases';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, SymptomTag } from '../types';
-
-const TAG_LABELS: Record<SymptomTag, string> = {
-  cramps: 'Cramps',
-  fatigue: 'Fatigue',
-  cravings: 'Cravings',
-  mood_swing: 'Mood swings',
-  acne: 'Acne',
-  hair_thinning: 'Hair thinning',
-  hirsutism: 'Excess hair growth',
-  ovulation_pain: 'Ovulation pain',
-};
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Insights'>,
@@ -35,6 +26,7 @@ export function InsightsScreen({ navigation }: Props) {
   const colors = useThemeColors();
   const [cycles, setCycles] = useState<CycleLog[] | null>(null);
   const [phases, setPhases] = useState<PhaseInsights | null>(null);
+  const [review, setReview] = useState<ClinicalReview | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -47,6 +39,7 @@ export function InsightsScreen({ navigation }: Props) {
         if (!active) return;
         setCycles(loadedCycles);
         setPhases(phaseInsights(loadedCycles, symptoms));
+        setReview(clinicalReview(loadedCycles, symptoms));
       })();
       return () => {
         active = false;
@@ -71,6 +64,47 @@ export function InsightsScreen({ navigation }: Props) {
         The numbers a clinician usually asks for, straight from what you've recorded. Nothing here
         is an assessment — it's your own data, counted.
       </Text>
+
+      {review !== null && review.flags.length > 0 && (
+        <View style={styles.flagCard}>
+          <Text style={styles.cardLabel}>Worth raising with a clinician</Text>
+          <Text style={styles.cardBody}>
+            Your records match patterns that published guidelines say are worth getting checked.
+            This is not a diagnosis and this app cannot give you one — it is a prompt to ask.
+          </Text>
+
+          {review.flags.map((flag) => (
+            <View key={flag.id} style={styles.flag}>
+              <View style={styles.flagHead}>
+                <View
+                  style={[
+                    styles.flagDot,
+                    { backgroundColor: flag.level === 'discuss' ? colors.accent : colors.apricot },
+                  ]}
+                />
+                <Text style={styles.flagTitle}>{flag.title}</Text>
+              </View>
+              <Text style={styles.flagFinding}>{flag.finding}</Text>
+              <Text style={styles.flagMeaning}>{flag.meaning}</Text>
+              <Text style={styles.flagSource}>{flag.source}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {review !== null && review.flags.length === 0 && review.measuredCycles >= 3 && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Checked against the guidelines</Text>
+          <Text style={styles.cardBody}>
+            Nothing in what you've recorded crosses the thresholds the guidelines flag — cycle
+            length, how much it varies, how long periods run, and how many you've had this year.
+          </Text>
+          <Text style={styles.note}>
+            That is not a clean bill of health. It only means these particular numbers look
+            ordinary, and it cannot see anything you have not logged.
+          </Text>
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Periods in the last 12 months</Text>
@@ -160,7 +194,7 @@ export function InsightsScreen({ navigation }: Props) {
                   {phases.clustered.slice(0, 4).map((pattern) => (
                     <Stat
                       key={pattern.tag}
-                      label={TAG_LABELS[pattern.tag]}
+                      label={SYMPTOM_LABELS[pattern.tag]}
                       value={`${Math.round(pattern.premenstrualRate * 100)}% vs ${Math.round(
                         pattern.restOfCycleRate * 100
                       )}%`}
@@ -284,6 +318,45 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     empty: {
       ...typography.bodySmall,
       color: colors.textMuted,
+    },
+    flagCard: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.lg,
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    flag: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    flagHead: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    flagDot: {
+      borderRadius: radius.pill,
+      height: 10,
+      width: 10,
+    },
+    flagTitle: {
+      ...typography.strong,
+      color: colors.text,
+      flex: 1,
+    },
+    flagFinding: {
+      ...typography.bodySmall,
+      color: colors.text,
+    },
+    flagMeaning: {
+      ...typography.caption,
+      color: colors.textMuted,
+    },
+    flagSource: {
+      ...typography.micro,
+      color: colors.textFaint,
     },
     linkCard: {
       alignItems: 'center',

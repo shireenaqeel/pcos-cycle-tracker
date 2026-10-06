@@ -8,23 +8,13 @@ import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { getSymptomLogForDate } from '../db/symptoms';
 import { checkInLines, isCheckInEmpty } from '../lib/checkInSummary';
+import { SYMPTOM_LABELS } from '../content/trackers';
 import { fromIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
 import type { CycleLog, DailySymptomLog, SymptomTag } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DayDetail'>;
-
-const TAG_LABELS: Record<SymptomTag, string> = {
-  cramps: 'Cramps',
-  fatigue: 'Fatigue',
-  cravings: 'Cravings',
-  mood_swing: 'Mood swings',
-  acne: 'Acne',
-  hair_thinning: 'Hair thinning',
-  hirsutism: 'Excess hair growth',
-  ovulation_pain: 'Ovulation pain',
-};
 
 export function DayDetailScreen({ navigation, route }: Props) {
   const styles = useThemedStyles(makeStyles);
@@ -117,7 +107,7 @@ export function DayDetailScreen({ navigation, route }: Props) {
           <>
             {symptoms.symptomTags.length > 0 && (
               <Text style={styles.cardBody}>
-                {symptoms.symptomTags.map((tag) => TAG_LABELS[tag]).join(' · ')}
+                {symptoms.symptomTags.map((tag) => SYMPTOM_LABELS[tag]).join(' · ')}
               </Text>
             )}
             {checkInLines(symptoms).map((line) => (

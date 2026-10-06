@@ -1,15 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, isToday } from 'date-fns';
 
 import { SleepBars, StressBlob, WaterGlasses } from '../components/CheckInControls';
-import { Blob, Chip, Squish } from '../components/Soft';
+import { Blob, Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
+import {
+  DISCHARGE_OPTIONS,
+  FLOW_OPTIONS,
+  MOOD_OPTIONS,
+  SEX_OPTIONS,
+  SYMPTOM_GROUPS,
+} from '../content/trackers';
 import { LOCAL_USER_ID } from '../db/profile';
 import { deleteSymptomLog, getSymptomLogForDate, saveSymptomLog } from '../db/symptoms';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
-import { successFeedback, tapFeedback, warningFeedback } from '../lib/feedback';
+import { successFeedback, warningFeedback } from '../lib/feedback';
 import type { RootStackParamList } from '../navigation/types';
 import {
   radius,
@@ -19,42 +26,16 @@ import {
   useThemedStyles,
   type ThemeColors,
 } from '../theme';
-import type { FlowIntensity, MovementLevel, SymptomTag } from '../types';
+import type {
+  DischargeType,
+  FlowIntensity,
+  MoodTag,
+  MovementLevel,
+  SexTag,
+  SymptomTag,
+} from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CheckIn'>;
-
-type StepName =
-  | 'flow'
-  | 'mood'
-  | 'stress'
-  | 'sleep'
-  | 'water'
-  | 'movement'
-  | 'body'
-  | 'meds'
-  | 'notes'
-  | 'done';
-
-const STEPS: StepName[] = [
-  'flow',
-  'mood',
-  'stress',
-  'sleep',
-  'water',
-  'movement',
-  'body',
-  'meds',
-  'notes',
-  'done',
-];
-
-const FLOW_OPTIONS: { value: FlowIntensity; label: string }[] = [
-  { value: 'light', label: 'Light' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'heavy', label: 'Heavy' },
-];
-
-const MOOD_OPTIONS = ['good', 'even', 'low', 'irritable', 'anxious'];
 
 const MOVEMENT_OPTIONS: { value: MovementLevel; label: string }[] = [
   { value: 'none', label: 'Rested' },
@@ -63,33 +44,17 @@ const MOVEMENT_OPTIONS: { value: MovementLevel; label: string }[] = [
   { value: 'intense', label: 'Hard' },
 ];
 
-const SYMPTOM_OPTIONS: { value: SymptomTag; label: string }[] = [
-  { value: 'cramps', label: 'Cramps' },
-  { value: 'fatigue', label: 'Fatigue' },
-  { value: 'cravings', label: 'Cravings' },
-  { value: 'mood_swing', label: 'Mood swings' },
-  { value: 'acne', label: 'Acne' },
-  { value: 'hair_thinning', label: 'Hair thinning' },
-  { value: 'hirsutism', label: 'Excess hair growth' },
-  { value: 'ovulation_pain', label: 'Ovulation pain' },
-];
+/** Adds or removes a value, so every grid behaves identically. */
+function toggle<T>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
 
-const PROMPTS: Record<StepName, { title: string; sub: string }> = {
-  flow: { title: 'Bleeding today?', sub: 'Leave it blank if not.' },
-  meds: {
-    title: 'Anything you took?',
-    sub: 'Supplements, the pill, metformin, painkillers — whatever applies.',
-  },
-  mood: { title: 'How are you feeling?', sub: 'However you land is fine.' },
-  stress: { title: 'How loud is today?', sub: 'One is calm, five is overwhelmed.' },
-  sleep: { title: 'How did you sleep?', sub: 'Tap roughly how many hours you got.' },
-  water: { title: 'Had much water?', sub: 'Tap a glass to fill it.' },
-  movement: { title: 'Did you move?', sub: 'Resting counts as an answer.' },
-  body: { title: 'How does your body feel?', sub: 'Tap anything you noticed. Skip what you did not.' },
-  notes: { title: 'Anything worth remembering?', sub: 'Food, or whatever else shaped the day.' },
-  done: { title: 'That is the lot.', sub: 'Here is what you logged.' },
-};
-
+/**
+ * One scrollable sheet of grouped categories, which is how established trackers
+ * do it. The earlier version marched through ten forced steps — tolerable on a
+ * first run, tedious every day after, and it buried whichever single thing the
+ * app was opened to record.
+ */
 export function CheckInScreen({ navigation, route }: Props) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
@@ -100,42 +65,40 @@ export function CheckInScreen({ navigation, route }: Props) {
   );
   const isoDate = toIsoDate(date);
 
-  const [stepIndex, setStepIndex] = useState(0);
   const [flow, setFlow] = useState<FlowIntensity | null>(null);
-  const [medications, setMedications] = useState('');
-  const [mood, setMood] = useState<string | null>(null);
+  const [moods, setMoods] = useState<MoodTag[]>([]);
+  const [tags, setTags] = useState<SymptomTag[]>([]);
+  const [discharge, setDischarge] = useState<DischargeType | null>(null);
+  const [sex, setSex] = useState<SexTag[]>([]);
   const [stress, setStress] = useState<number | null>(null);
   const [hydration, setHydration] = useState(0);
   const [sleep, setSleep] = useState(0);
   const [movement, setMovement] = useState<MovementLevel | null>(null);
-  const [tags, setTags] = useState<SymptomTag[]>([]);
+  const [medications, setMedications] = useState('');
   const [foodNote, setFoodNote] = useState('');
   const [otherNote, setOtherNote] = useState('');
-  const [existingEntry, setExistingEntry] = useState(false);
-  // Not editable here, but carried through the save so an older reading isn't
-  // wiped by re-saving the day.
+  // Not editable here, but carried through so an older reading isn't wiped.
   const [basalTemp, setBasalTemp] = useState<number | null>(null);
+  const [existingEntry, setExistingEntry] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const step = STEPS[stepIndex];
-  const fade = useRef(new Animated.Value(1)).current;
-  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let active = true;
     getSymptomLogForDate(LOCAL_USER_ID, isoDate).then((entry) => {
       if (!active || entry === null) return;
-      setMood(entry.mood);
+      setFlow(entry.flow);
+      setMoods(entry.moods);
+      setTags(entry.symptomTags);
+      setDischarge(entry.discharge);
+      setSex(entry.sex);
       setStress(entry.stressLevel);
       setHydration(entry.hydrationGlasses ?? 0);
       setSleep(entry.sleepHours ?? 0);
       setMovement(entry.movement);
-      setTags(entry.symptomTags);
+      setMedications(entry.medications ?? '');
       setFoodNote(entry.foodNote ?? '');
       setOtherNote(entry.otherNote ?? '');
       setBasalTemp(entry.basalTemp);
-      setFlow(entry.flow);
-      setMedications(entry.medications ?? '');
       setExistingEntry(true);
     });
     return () => {
@@ -143,28 +106,16 @@ export function CheckInScreen({ navigation, route }: Props) {
     };
   }, [isoDate]);
 
-  useEffect(() => {
-    Animated.timing(progress, {
-      toValue: (stepIndex + 1) / STEPS.length,
-      duration: 280,
-      useNativeDriver: false,
-    }).start();
-  }, [stepIndex, progress]);
-
-  /** Cross-fades the panel so moving between questions doesn't feel like a page reload. */
-  function goTo(nextIndex: number) {
-    tapFeedback();
-    Animated.timing(fade, { toValue: 0, duration: 110, useNativeDriver: true }).start(() => {
-      setStepIndex(nextIndex);
-      Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: true }).start();
-    });
-  }
-
-  function toggleTag(tag: SymptomTag) {
-    setTags((current) =>
-      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]
-    );
-  }
+  const chosenCount =
+    moods.length +
+    tags.length +
+    sex.length +
+    (flow === null ? 0 : 1) +
+    (discharge === null ? 0 : 1) +
+    (stress === null ? 0 : 1) +
+    (hydration === 0 ? 0 : 1) +
+    (sleep === 0 ? 0 : 1) +
+    (movement === null ? 0 : 1);
 
   async function save() {
     setBusy(true);
@@ -173,15 +124,18 @@ export function CheckInScreen({ navigation, route }: Props) {
       date: isoDate,
       symptomTags: tags,
       basalTemp,
-      mood,
+      mood: null,
+      moods,
+      discharge,
+      sex,
       stressLevel: stress,
       hydrationGlasses: hydration === 0 ? null : hydration,
       sleepHours: sleep === 0 ? null : sleep,
       movement,
-      foodNote: foodNote.trim() === '' ? null : foodNote.trim(),
-      otherNote: otherNote.trim() === '' ? null : otherNote.trim(),
       flow,
       medications: medications.trim() === '' ? null : medications.trim(),
+      foodNote: foodNote.trim() === '' ? null : foodNote.trim(),
+      otherNote: otherNote.trim() === '' ? null : otherNote.trim(),
     });
     successFeedback();
     navigation.goBack();
@@ -194,333 +148,282 @@ export function CheckInScreen({ navigation, route }: Props) {
     navigation.goBack();
   }
 
-  const summary = [
-    flow === null ? null : `${flow} flow`,
-    mood === null ? null : `feeling ${mood}`,
-    stress === null ? null : `stress ${stress} of 5`,
-    sleep === 0 ? null : `${sleep} hours of sleep`,
-    hydration === 0 ? null : `${hydration} glasses of water`,
-    movement === null ? null : MOVEMENT_OPTIONS.find((o) => o.value === movement)?.label.toLowerCase(),
-    tags.length === 0 ? null : `${tags.length} thing${tags.length === 1 ? '' : 's'} noticed`,
-    medications.trim() === '' ? null : `took ${medications.trim()}`,
-  ].filter((line): line is string => line !== null);
-
   return (
-    <LinearGradient
-      colors={[colors.gradientFrom, colors.background]}
-      style={styles.screen}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.9, y: 0.7 }}
-    >
-      <Blob color={colors.petal} size={260} style={styles.blobOne} />
-      <Blob color={colors.lilac} size={200} style={styles.blobTwo} />
+    <View style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.headerWrap}>
+          <Blob color={colors.petal} size={220} style={styles.blob} />
+          <LinearGradient
+            colors={[colors.gradientFrom, colors.gradientTo]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
+          >
+            <Text style={styles.headerTitle}>
+              {isToday(date) ? 'Today' : format(date, 'EEEE, d MMMM')}
+            </Text>
+            <Text style={styles.headerSub}>
+              {chosenCount === 0
+                ? 'Tap whatever applies. Nothing here is required.'
+                : `${chosenCount} recorded so far.`}
+            </Text>
+          </LinearGradient>
+        </View>
 
-      <View style={styles.progressTrack}>
-        <Animated.View
-          style={[
-            styles.progressFill,
-            { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-          ]}
-        />
-      </View>
+        <SoftCard tint={colors.petal}>
+          <SectionLabel>Bleeding</SectionLabel>
+          <View style={styles.grid}>
+            {FLOW_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                tint={colors.surface}
+                selected={flow === option.value}
+                onPress={() => setFlow(flow === option.value ? null : option.value)}
+              />
+            ))}
+          </View>
+        </SoftCard>
 
-      <Text style={styles.dayLabel}>
-        {isToday(date) ? 'Today' : format(date, 'EEEE, d MMMM')} · {stepIndex + 1} of {STEPS.length}
-      </Text>
+        <SoftCard tint={colors.lilac}>
+          <SectionLabel>Mood — as many as fit</SectionLabel>
+          <View style={styles.grid}>
+            {MOOD_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                tint={colors.surface}
+                selected={moods.includes(option.value)}
+                onPress={() => setMoods((current) => toggle(current, option.value))}
+              />
+            ))}
+          </View>
+        </SoftCard>
 
-      <Animated.View style={[styles.panel, { opacity: fade }]}>
-        <Text style={styles.title}>{PROMPTS[step].title}</Text>
-        <Text style={styles.sub}>{PROMPTS[step].sub}</Text>
-
-        <ScrollView
-          contentContainerStyle={styles.stepBody}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {step === 'flow' && (
-            <View style={styles.wrap}>
-              {FLOW_OPTIONS.map((option) => (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  selected={flow === option.value}
-                  onPress={() => setFlow(flow === option.value ? null : option.value)}
-                />
-              ))}
-            </View>
-          )}
-
-          {step === 'meds' && (
-            <TextInput
-              style={styles.input}
-              value={medications}
-              onChangeText={setMedications}
-              placeholder="Inositol, metformin, the pill, ibuprofen…"
-              placeholderTextColor={colors.textFaint}
-              multiline
-            />
-          )}
-
-          {step === 'mood' && (
-            <View style={styles.wrap}>
-              {MOOD_OPTIONS.map((option) => (
-                <Chip
-                  key={option}
-                  label={option}
-                  selected={mood === option}
-                  onPress={() => setMood(mood === option ? null : option)}
-                />
-              ))}
-            </View>
-          )}
-
-          {step === 'stress' && <StressBlob level={stress} onChange={setStress} />}
-
-          {step === 'sleep' && <SleepBars hours={sleep} onChange={setSleep} />}
-
-          {step === 'water' && (
-            <View style={styles.waterBlock}>
-              <WaterGlasses count={hydration} onChange={setHydration} />
-              <Text style={styles.waterCount}>
-                {hydration === 0 ? 'none yet' : `${hydration} glass${hydration === 1 ? '' : 'es'}`}
-              </Text>
-            </View>
-          )}
-
-          {step === 'movement' && (
-            <View style={styles.wrap}>
-              {MOVEMENT_OPTIONS.map((option) => (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  selected={movement === option.value}
-                  onPress={() => setMovement(movement === option.value ? null : option.value)}
-                />
-              ))}
-            </View>
-          )}
-
-          {step === 'body' && (
-            <View style={styles.wrap}>
-              {SYMPTOM_OPTIONS.map((option) => (
+        {SYMPTOM_GROUPS.map((group) => (
+          <SoftCard key={group.title}>
+            <SectionLabel>{group.title}</SectionLabel>
+            <View style={styles.grid}>
+              {group.options.map((option) => (
                 <Chip
                   key={option.value}
                   label={option.label}
                   selected={tags.includes(option.value)}
-                  onPress={() => toggleTag(option.value)}
+                  onPress={() => setTags((current) => toggle(current, option.value))}
                 />
               ))}
             </View>
-          )}
+          </SoftCard>
+        ))}
 
-          {step === 'notes' && (
-            <View style={styles.notes}>
-              <Text style={styles.noteLabel}>Food</Text>
-              <TextInput
-                style={styles.input}
-                value={foodNote}
-                onChangeText={setFoodNote}
-                placeholder="What you ate, how it sat with you"
-                placeholderTextColor={colors.textFaint}
-                multiline
+        <SoftCard>
+          <SectionLabel>Discharge</SectionLabel>
+          <View style={styles.grid}>
+            {DISCHARGE_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={discharge === option.value}
+                onPress={() => setDischarge(discharge === option.value ? null : option.value)}
               />
-              <Text style={styles.noteLabel}>Anything else</Text>
-              <TextInput
-                style={styles.input}
-                value={otherNote}
-                onChangeText={setOtherNote}
-                placeholder="Travel, illness, medication, a hard week"
-                placeholderTextColor={colors.textFaint}
-                multiline
+            ))}
+          </View>
+          <Text style={styles.note}>
+            Clumpy, grey or unusual-smelling discharge is worth raising with a clinician rather
+            than only tracking.
+          </Text>
+        </SoftCard>
+
+        <SoftCard>
+          <SectionLabel>Sex and drive</SectionLabel>
+          <View style={styles.grid}>
+            {SEX_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={sex.includes(option.value)}
+                onPress={() => setSex((current) => toggle(current, option.value))}
               />
-            </View>
-          )}
+            ))}
+          </View>
+        </SoftCard>
 
-          {step === 'done' && (
-            <View style={styles.summary}>
-              {summary.length === 0 ? (
-                <Text style={styles.summaryEmpty}>
-                  Nothing tapped — saving will still record the day as checked in.
-                </Text>
-              ) : (
-                summary.map((line) => (
-                  <Text key={line} style={styles.summaryLine}>
-                    {line}
-                  </Text>
-                ))
-              )}
-              <Text style={styles.footnote}>
-                None of this moves the prediction. It's here so you can see your own patterns.
-              </Text>
-            </View>
-          )}
-        </ScrollView>
-      </Animated.View>
+        <SoftCard tint={colors.apricot}>
+          <SectionLabel>Stress</SectionLabel>
+          <StressBlob level={stress} onChange={setStress} />
+        </SoftCard>
 
-      <View style={styles.footer}>
-        {stepIndex > 0 && (
-          <Pressable style={styles.backButton} onPress={() => goTo(stepIndex - 1)}>
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
+        <SoftCard tint={colors.sage}>
+          <SectionLabel>Water</SectionLabel>
+          <WaterGlasses count={hydration} onChange={setHydration} />
+        </SoftCard>
+
+        <SoftCard>
+          <SectionLabel>Sleep</SectionLabel>
+          <SleepBars hours={sleep} onChange={setSleep} />
+        </SoftCard>
+
+        <SoftCard>
+          <SectionLabel>Movement</SectionLabel>
+          <View style={styles.grid}>
+            {MOVEMENT_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={movement === option.value}
+                onPress={() => setMovement(movement === option.value ? null : option.value)}
+              />
+            ))}
+          </View>
+        </SoftCard>
+
+        <SoftCard>
+          <SectionLabel>Medication and supplements</SectionLabel>
+          <TextInput
+            style={styles.input}
+            value={medications}
+            onChangeText={setMedications}
+            placeholder="Inositol, metformin, the pill, ibuprofen…"
+            placeholderTextColor={colors.textFaint}
+            multiline
+          />
+        </SoftCard>
+
+        <SoftCard>
+          <SectionLabel>Food</SectionLabel>
+          <TextInput
+            style={styles.input}
+            value={foodNote}
+            onChangeText={setFoodNote}
+            placeholder="What you ate, how it sat with you"
+            placeholderTextColor={colors.textFaint}
+            multiline
+          />
+        </SoftCard>
+
+        <SoftCard>
+          <SectionLabel>Anything else going on</SectionLabel>
+          <TextInput
+            style={styles.input}
+            value={otherNote}
+            onChangeText={setOtherNote}
+            placeholder="Travel, illness, a hard week"
+            placeholderTextColor={colors.textFaint}
+            multiline
+          />
+        </SoftCard>
+
+        {existingEntry && (
+          <Squish onPress={clearDay} disabled={busy} haptic={false}>
+            <View style={styles.clearButton}>
+              <Text style={styles.clearText}>Clear this day</Text>
+            </View>
+          </Squish>
         )}
 
-        <Squish
-          style={styles.nextWrap}
-          haptic={false}
-          disabled={busy}
-          onPress={() => (step === 'done' ? save() : goTo(stepIndex + 1))}
-        >
-          <View style={styles.nextButton}>
-            <Text style={styles.nextText}>
-              {step === 'done' ? `Save ${format(date, 'd MMM')}` : 'Next'}
+        <Text style={styles.footnote}>
+          None of this moves the prediction — it's here so you can see your own patterns, and so
+          there's something real to show a clinician.
+        </Text>
+      </ScrollView>
+
+      <View style={styles.saveBar}>
+        <Squish onPress={save} disabled={busy} haptic={false}>
+          <View style={styles.saveButton}>
+            <Text style={styles.saveButtonText}>
+              {busy ? 'Saving…' : `Save ${format(date, 'd MMM')}`}
             </Text>
           </View>
         </Squish>
       </View>
-
-      {step === 'done' && existingEntry && (
-        <Pressable disabled={busy} style={styles.clearButton} onPress={clearDay}>
-          <Text style={styles.clearText}>Clear this day</Text>
-        </Pressable>
-      )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const makeStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     screen: {
+      backgroundColor: colors.background,
       flex: 1,
-      paddingHorizontal: spacing.md,
-      paddingTop: spacing.md,
     },
-    blobOne: {
-      left: -90,
-      opacity: 0.35,
+    container: {
+      gap: spacing.sm,
+      padding: spacing.md,
+      paddingBottom: spacing.xl * 3,
+    },
+    headerWrap: {
+      marginBottom: spacing.xs,
+    },
+    blob: {
+      opacity: 0.4,
       position: 'absolute',
-      top: 40,
+      right: -60,
+      top: -55,
     },
-    blobTwo: {
-      bottom: 60,
-      opacity: 0.3,
-      position: 'absolute',
-      right: -80,
+    header: {
+      borderRadius: radius.xl,
+      gap: spacing.xs,
+      padding: spacing.lg,
     },
-    progressTrack: {
-      backgroundColor: colors.border,
-      borderRadius: radius.pill,
-      height: 5,
-      overflow: 'hidden',
-    },
-    progressFill: {
-      backgroundColor: colors.accent,
-      height: '100%',
-    },
-    dayLabel: {
-      ...typography.micro,
-      color: colors.textMuted,
-      marginTop: spacing.sm,
-    },
-    panel: {
-      flex: 1,
-      paddingTop: spacing.lg,
-    },
-    title: {
+    headerTitle: {
       ...typography.title,
       color: colors.text,
     },
-    sub: {
+    headerSub: {
       ...typography.bodySmall,
       color: colors.textMuted,
-      marginTop: spacing.xs,
     },
-    stepBody: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      paddingVertical: spacing.lg,
-    },
-    wrap: {
+    grid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: spacing.sm,
-      justifyContent: 'center',
     },
-    waterBlock: {
-      alignItems: 'center',
-      gap: spacing.md,
-    },
-    waterCount: {
-      ...typography.body,
-      color: colors.textMuted,
-    },
-    notes: {
-      gap: spacing.sm,
-    },
-    noteLabel: {
-      ...typography.label,
+    note: {
+      ...typography.micro,
       color: colors.textMuted,
     },
     input: {
       ...typography.body,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.background,
       borderRadius: radius.md,
       color: colors.text,
-      minHeight: 76,
+      minHeight: 64,
       padding: spacing.md,
       textAlignVertical: 'top',
     },
-    summary: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      gap: spacing.xs,
-      padding: spacing.lg,
+    clearButton: {
+      alignItems: 'center',
+      padding: spacing.md,
     },
-    summaryLine: {
-      ...typography.body,
-      color: colors.text,
-    },
-    summaryEmpty: {
-      ...typography.body,
+    clearText: {
+      ...typography.bodySmall,
       color: colors.textMuted,
     },
     footnote: {
       ...typography.micro,
       color: colors.textFaint,
-      marginTop: spacing.sm,
+      textAlign: 'center',
     },
-    footer: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: spacing.sm,
-      paddingBottom: spacing.md,
+    // Pinned: the sheet is long, and a save button at the end of it would mean
+    // scrolling past everything to commit a single tap.
+    saveBar: {
+      backgroundColor: colors.background,
+      borderTopColor: colors.border,
+      borderTopWidth: 1,
+      bottom: 0,
+      left: 0,
+      padding: spacing.md,
+      position: 'absolute',
+      right: 0,
     },
-    backButton: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.md,
-    },
-    backText: {
-      ...typography.bodySmall,
-      color: colors.textMuted,
-    },
-    nextWrap: {
-      flex: 1,
-    },
-    nextButton: {
+    saveButton: {
       alignItems: 'center',
       backgroundColor: colors.accent,
       borderRadius: radius.pill,
       padding: spacing.md,
     },
-    nextText: {
+    saveButtonText: {
       ...typography.strong,
       color: colors.onAccent,
-    },
-    clearButton: {
-      alignItems: 'center',
-      paddingBottom: spacing.md,
-    },
-    clearText: {
-      ...typography.bodySmall,
-      color: colors.textMuted,
     },
   });

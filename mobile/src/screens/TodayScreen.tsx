@@ -27,7 +27,8 @@ import {
   useThemedStyles,
   type ThemeColors,
 } from '../theme';
-import type { CycleLog, CycleRangePrediction, DailySymptomLog } from '../types';
+import { MOOD_LABELS } from '../content/trackers';
+import type { CycleLog, CycleRangePrediction, DailySymptomLog, MoodTag } from '../types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Today'>,
@@ -42,7 +43,8 @@ interface Loaded {
   name: string | null;
 }
 
-const QUICK_MOODS = ['good', 'even', 'low', 'irritable', 'anxious'];
+/** A handful of common ones for a one-tap log; the full set lives in the check-in. */
+const QUICK_MOODS: MoodTag[] = ['calm', 'happy', 'tired', 'irritable', 'anxious', 'overwhelmed'];
 
 function greeting(name: string | null): string {
   const hour = getHours(new Date());
@@ -115,13 +117,17 @@ export function TodayScreen({ navigation }: Props) {
   const bleedingToday = calendar.periodDates.has(toIsoDate(new Date()));
 
   /** Tapping a mood here records it outright — no trip to a form for one tap. */
-  async function setMood(mood: string) {
+  async function setMood(mood: MoodTag) {
+    const current = today?.moods ?? [];
     await saveSymptomLog({
       userId: LOCAL_USER_ID,
       date: toIsoDate(new Date()),
       symptomTags: today?.symptomTags ?? [],
       basalTemp: today?.basalTemp ?? null,
-      mood: today?.mood === mood ? null : mood,
+      mood: null,
+      moods: current.includes(mood) ? current.filter((m) => m !== mood) : [...current, mood],
+      discharge: today?.discharge ?? null,
+      sex: today?.sex ?? [],
       stressLevel: today?.stressLevel ?? null,
       hydrationGlasses: today?.hydrationGlasses ?? null,
       sleepHours: today?.sleepHours ?? null,
@@ -195,8 +201,8 @@ export function TodayScreen({ navigation }: Props) {
           {QUICK_MOODS.map((mood) => (
             <Chip
               key={mood}
-              label={mood}
-              selected={today?.mood === mood}
+              label={MOOD_LABELS[mood]}
+              selected={today?.moods.includes(mood) ?? false}
               onPress={() => setMood(mood)}
             />
           ))}
@@ -275,6 +281,7 @@ function Tile({ label, tint, onPress }: { label: string; tint: string; onPress: 
 /** A short readback of what's already logged today, so the card isn't only an input. */
 function summariseCheckIn(entry: DailySymptomLog): string | null {
   const parts: string[] = [];
+  if (entry.moods.length > 0) parts.push(entry.moods.map((m) => MOOD_LABELS[m]).join(', ').toLowerCase());
   if (entry.stressLevel !== null) parts.push(`stress ${entry.stressLevel}/5`);
   if (entry.hydrationGlasses !== null) parts.push(`${entry.hydrationGlasses} glasses`);
   if (entry.sleepHours !== null) parts.push(`${entry.sleepHours}h sleep`);
