@@ -17,11 +17,10 @@ import { AccuracyScreen } from './src/screens/AccuracyScreen';
 import { BackfillScreen } from './src/screens/BackfillScreen';
 import { CheckInScreen } from './src/screens/CheckInScreen';
 import { CalendarScreen } from './src/screens/CalendarScreen';
-import { CycleDetailScreen } from './src/screens/CycleDetailScreen';
 import { DayDetailScreen } from './src/screens/DayDetailScreen';
 import { InsightsScreen } from './src/screens/InsightsScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
-import { LogCycleScreen } from './src/screens/LogCycleScreen';
+import { PeriodScreen } from './src/screens/PeriodScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { LockScreen } from './src/screens/LockScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -150,19 +149,14 @@ function AppShell({ profile }: { profile: UserProfile }) {
           />
           <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
           <Stack.Screen
-            name="LogCycle"
-            component={LogCycleScreen}
-            options={{ title: 'Log a period', presentation: 'modal' }}
+            name="Period"
+            component={PeriodScreen}
+            options={{ title: 'Period', presentation: 'modal' }}
           />
           <Stack.Screen
             name="Backfill"
             component={BackfillScreen}
             options={{ title: 'Past cycles', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="CycleDetail"
-            component={CycleDetailScreen}
-            options={{ title: 'Edit period' }}
           />
           <Stack.Screen name="DayDetail" component={DayDetailScreen} options={{ title: 'Day' }} />
           <Stack.Screen

@@ -10,9 +10,9 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Onboarding: undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  LogCycle: undefined;
+  /** Add a period, or edit one by id. `startDate` prefills a date tapped on the calendar. */
+  Period: { cycleId?: string; startDate?: string } | undefined;
   Backfill: undefined;
-  CycleDetail: { cycleId: string };
   DayDetail: { date: string };
   CheckIn: { date?: string } | undefined;
   SymptomHistory: undefined;

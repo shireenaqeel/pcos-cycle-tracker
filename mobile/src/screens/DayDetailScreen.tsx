@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { format, isAfter, startOfDay } from 'date-fns';
 
-import { insertCycleLog, listCycleLogs } from '../db/cycles';
+import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { getSymptomLogForDate } from '../db/symptoms';
 import { checkInLines, isCheckInEmpty } from '../lib/checkInSummary';
@@ -33,7 +33,6 @@ export function DayDetailScreen({ navigation, route }: Props) {
   const [cycleOnDay, setCycleOnDay] = useState<CycleLog | null>(null);
   const [symptoms, setSymptoms] = useState<DailySymptomLog | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,17 +55,6 @@ export function DayDetailScreen({ navigation, route }: Props) {
 
   const day = fromIsoDate(date);
   const inFuture = isAfter(startOfDay(day), startOfDay(new Date()));
-
-  async function markPeriodStart() {
-    setBusy(true);
-    await insertCycleLog({
-      userId: LOCAL_USER_ID,
-      startDate: date,
-      entrySource: 'logged',
-      flowIntensity: null,
-    });
-    navigation.goBack();
-  }
 
   if (!loaded) {
     return (
@@ -105,9 +93,8 @@ export function DayDetailScreen({ navigation, route }: Props) {
             <Text style={styles.meta}>A period can't be recorded for a future date.</Text>
           ) : (
             <Pressable
-              disabled={busy}
               style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-              onPress={markPeriodStart}
+              onPress={() => navigation.navigate('Period', { startDate: date })}
             >
               <Text style={styles.buttonText}>My period started this day</Text>
             </Pressable>
@@ -115,7 +102,7 @@ export function DayDetailScreen({ navigation, route }: Props) {
         ) : (
           <Pressable
             style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
-            onPress={() => navigation.navigate('CycleDetail', { cycleId: cycleOnDay.id })}
+            onPress={() => navigation.navigate('Period', { cycleId: cycleOnDay.id })}
           >
             <Text style={styles.ghostButtonText}>Edit or delete this period</Text>
           </Pressable>

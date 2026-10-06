@@ -210,7 +210,7 @@ export function TodayScreen({ navigation }: Props) {
         <Tile
           label={bleedingToday ? 'Period logged' : 'Period started'}
           tint={colors.petal}
-          onPress={() => navigation.navigate('LogCycle')}
+          onPress={() => navigation.navigate('Period', {})}
         />
         <Tile
           label="Full check-in"
@@ -243,7 +243,7 @@ export function TodayScreen({ navigation }: Props) {
               <Squish
                 key={cycle.id}
                 haptic={false}
-                onPress={() => navigation.navigate('CycleDetail', { cycleId: cycle.id })}
+                onPress={() => navigation.navigate('Period', { cycleId: cycle.id })}
               >
                 <View style={styles.historyRow}>
                   <Text style={styles.historyDate}>
