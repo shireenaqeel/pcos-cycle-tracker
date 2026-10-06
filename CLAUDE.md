@@ -727,3 +727,23 @@ the work was making the privacy real and closing the feature gaps.
   basal temperature) rather than counting back from a predicted date.
 - **Choosing which check-in steps appear** — users complain loudly when apps
   remove this; ten fixed steps is already a lot to tap through.
+
+## expo-notifications and Expo Go — a trap worth remembering
+
+`expo-notifications` **throws on import** in Expo Go on Android: push support
+was removed from Expo Go in SDK 53. Because `lib/reminders.ts` imported it at
+the top level and `TodayScreen` imports that file, the whole app died at
+startup with "Runtime not ready".
+
+The SDK 57 docs say local notifications "remain available in Expo Go". On
+Android that is not what the device does. **Trust the device over the
+changelog** when a native module is involved.
+
+The module is therefore loaded through `await import('expo-notifications')`,
+behind `remindersSupported()`, which checks
+`Constants.executionEnvironment !== StoreClient` — `storeClient` being Expo Go.
+In Expo Go the reminder toggle is disabled and says why; in an installed build
+it works normally. **Never move that back to a static import.**
+
+This is the first feature that genuinely needs a development or production
+build rather than Expo Go.

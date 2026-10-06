@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { addDays, isAfter, setHours, setMinutes, setSeconds, subDays } from 'date-fns';
 
@@ -16,7 +16,30 @@ export interface ReminderPlan {
   hour: number;
 }
 
+/**
+ * `expo-notifications` was stripped out of Expo Go for Android in SDK 53, and
+ * it throws the moment it is imported there — which took the whole app down on
+ * startup, because this module was imported at the top of a screen. So it is
+ * loaded on demand, and only once we know we are not in Expo Go.
+ *
+ * The docs say local notifications "remain available in Expo Go"; on Android
+ * that is not what happens. Trust the device over the changelog.
+ */
+export function remindersSupported(): boolean {
+  return Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
+}
+
+type NotificationsModule = typeof import('expo-notifications');
+
+async function loadNotifications(): Promise<NotificationsModule | null> {
+  if (!remindersSupported()) return null;
+  return import('expo-notifications');
+}
+
 export async function requestPermission(): Promise<boolean> {
+  const Notifications = await loadNotifications();
+  if (Notifications === null) return false;
+
   const existing = await Notifications.getPermissionsAsync();
   if (existing.granted) return true;
   if (!existing.canAskAgain) return false;
@@ -35,6 +58,9 @@ function at(date: Date, hour: number): Date {
  * up telling people their period is due on a date the app no longer predicts.
  */
 export async function rescheduleReminders(plan: ReminderPlan): Promise<void> {
+  const Notifications = await loadNotifications();
+  if (Notifications === null) return;
+
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   if (Platform.OS === 'android') {
@@ -92,5 +118,7 @@ export async function rescheduleReminders(plan: ReminderPlan): Promise<void> {
 }
 
 export async function cancelReminders(): Promise<void> {
+  const Notifications = await loadNotifications();
+  if (Notifications === null) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
 }

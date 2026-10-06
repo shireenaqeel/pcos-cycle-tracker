@@ -18,7 +18,12 @@ import { deleteAllRecords } from '../db/reset';
 import { getOrCreateProfile, setAppLock, setPhenotype, setReminderPrefs } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { exportEverything } from '../lib/exportData';
-import { cancelReminders, requestPermission, rescheduleReminders } from '../lib/reminders';
+import {
+  cancelReminders,
+  remindersSupported,
+  requestPermission,
+  rescheduleReminders,
+} from '../lib/reminders';
 import { projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar } from '../lib/cycleDays';
 import { successFeedback, warningFeedback } from '../lib/feedback';
@@ -78,6 +83,12 @@ export function SettingsScreen(_props: Props) {
 
     if (!enabled) {
       await cancelReminders();
+      return;
+    }
+
+    if (!remindersSupported()) {
+      setReminders(false);
+      await setReminderPrefs({ enabled: false, hour });
       return;
     }
 
@@ -216,6 +227,7 @@ export function SettingsScreen(_props: Props) {
           <Text style={styles.switchLabel}>Nudge me about my cycle</Text>
           <Switch
             value={reminders}
+            disabled={!remindersSupported()}
             onValueChange={(next) => void applyReminders(next, reminderHour)}
             trackColor={{ true: colors.accent, false: colors.border }}
           />
@@ -224,6 +236,12 @@ export function SettingsScreen(_props: Props) {
           Two days before your window opens, on the day it opens, and a daily check-in nudge.
           Scheduled on this phone — no server is involved and nothing is sent anywhere.
         </Text>
+        {!remindersSupported() && (
+          <Text style={styles.note}>
+            Unavailable in Expo Go: Android support for notifications was removed from it in SDK
+            53. This works in an installed build of the app.
+          </Text>
+        )}
         {reminders && (
           <>
             <Text style={styles.switchLabel}>Time of day</Text>
