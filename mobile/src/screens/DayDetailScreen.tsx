@@ -92,9 +92,16 @@ export function DayDetailScreen({ navigation, route }: Props) {
         ) : (
           <Pressable
             style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed]}
-            onPress={() => navigation.navigate('Period', { cycleId: cycleOnDay.id })}
+            onPress={() =>
+              navigation.navigate('Period', {
+                cycleId: cycleOnDay.id,
+                markEnd: cycleOnDay.endDate === null,
+              })
+            }
           >
-            <Text style={styles.ghostButtonText}>Edit or delete this period</Text>
+            <Text style={styles.ghostButtonText}>
+              {cycleOnDay.endDate === null ? 'Set the end date' : 'Edit or delete this period'}
+            </Text>
           </Pressable>
         )}
       </View>

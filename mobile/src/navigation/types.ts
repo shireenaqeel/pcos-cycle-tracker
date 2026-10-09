@@ -10,8 +10,11 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Onboarding: undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  /** Add a period, or edit one by id. `startDate` prefills a date tapped on the calendar. */
-  Period: { cycleId?: string; startDate?: string } | undefined;
+  /**
+   * Add a period, or edit one by id. `startDate` prefills a date tapped on the
+   * calendar; `markEnd` opens straight into setting the end date.
+   */
+  Period: { cycleId?: string; startDate?: string; markEnd?: boolean } | undefined;
   Backfill: undefined;
   DayDetail: { date: string };
   CheckIn: { date?: string } | undefined;

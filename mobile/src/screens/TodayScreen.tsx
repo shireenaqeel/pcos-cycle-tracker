@@ -116,6 +116,11 @@ export function TodayScreen({ navigation }: Props) {
 
   const { cycles, prediction, calendar, today, name } = data;
   const bleedingToday = calendar.periodDates.has(toIsoDate(new Date()));
+  // The most recent period with no end date recorded. While one exists, ending
+  // it is the action someone is most likely here for — previously the only way
+  // to reach it was to find that period in the history list.
+  const ongoingPeriod =
+    cycles.length === 0 ? null : (cycles[cycles.length - 1].endDate === null ? cycles[cycles.length - 1] : null);
 
   /** Tapping a mood here records it outright — no trip to a form for one tap. */
   async function setMood(mood: MoodTag) {
@@ -232,9 +237,14 @@ export function TodayScreen({ navigation }: Props) {
 
       <FadeInUp delay={240} style={styles.tileRow}>
         <Tile
-          label={bleedingToday ? 'Period logged' : 'Period started'}
+          label={ongoingPeriod === null ? 'Period started' : 'My period ended'}
           tint={colors.petal}
-          onPress={() => navigation.navigate('Period', {})}
+          onPress={() =>
+            navigation.navigate(
+              'Period',
+              ongoingPeriod === null ? {} : { cycleId: ongoingPeriod.id, markEnd: true }
+            )
+          }
         />
         <Tile
           label="Full check-in"
@@ -267,14 +277,24 @@ export function TodayScreen({ navigation }: Props) {
               <Squish
                 key={cycle.id}
                 haptic={false}
-                onPress={() => navigation.navigate('Period', { cycleId: cycle.id })}
+                onPress={() =>
+                  navigation.navigate('Period', {
+                    cycleId: cycle.id,
+                    markEnd: cycle.endDate === null,
+                  })
+                }
               >
                 <View style={styles.historyRow}>
                   <Text style={styles.historyDate}>
-                    {format(fromIsoDate(cycle.startDate), 'd MMM yyyy')}
+                    {format(fromIsoDate(cycle.startDate), 'd MMM')}
+                    {cycle.endDate === null
+                      ? ''
+                      : ` – ${format(fromIsoDate(cycle.endDate), 'd MMM')}`}
                   </Text>
-                  <Text style={styles.historyMeta}>
-                    {cycle.entrySource === 'backfilled' ? 'from memory' : 'logged live'}
+                  <Text
+                    style={[styles.historyMeta, cycle.endDate === null && styles.historyOngoing]}
+                  >
+                    {cycle.endDate === null ? 'no end date yet' : `${periodLength(cycle)} days`}
                   </Text>
                 </View>
               </Squish>
@@ -305,6 +325,13 @@ function summariseCheckIn(entry: DailySymptomLog): string | null {
   if (entry.sleepHours !== null) parts.push(`${entry.sleepHours}h sleep`);
   if (entry.symptomTags.length > 0) parts.push(`${entry.symptomTags.length} noted`);
   return parts.length === 0 ? null : `Today so far — ${parts.join(' · ')}.`;
+}
+
+function periodLength(cycle: CycleLog): number {
+  if (cycle.endDate === null) return 0;
+  return (
+    differenceInCalendarDays(fromIsoDate(cycle.endDate), fromIsoDate(cycle.startDate)) + 1
+  );
 }
 
 function windowPhrase(startIso: string, endIso: string): string {
@@ -442,6 +469,9 @@ const makeStyles = (colors: ThemeColors) =>
     historyDate: {
       ...typography.body,
       color: colors.text,
+    },
+    historyOngoing: {
+      color: colors.accent,
     },
     historyMeta: {
       ...typography.micro,

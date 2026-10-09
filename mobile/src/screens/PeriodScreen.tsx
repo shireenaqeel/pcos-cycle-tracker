@@ -44,6 +44,7 @@ export function PeriodScreen({ navigation, route }: Props) {
   const colors = useThemeColors();
 
   const editingId = route.params?.cycleId;
+  const openedToEnd = route.params?.markEnd === true;
   const [loaded, setLoaded] = useState(false);
   const [startDate, setStartDate] = useState<Date>(() =>
     route.params?.startDate === undefined ? new Date() : fromIsoDate(route.params.startDate)
@@ -68,9 +69,16 @@ export function PeriodScreen({ navigation, route }: Props) {
       }
 
       if (existing !== null) {
-        setStartDate(fromIsoDate(existing.startDate));
+        const start = fromIsoDate(existing.startDate);
+        setStartDate(start);
         setEndDate(existing.endDate === null ? null : fromIsoDate(existing.endDate));
-        setStillBleeding(existing.endDate === null);
+        // Arriving via "my period ended" means the end date is the whole point,
+        // so don't make them flip a toggle to reach it.
+        setStillBleeding(openedToEnd ? false : existing.endDate === null);
+        if (openedToEnd && existing.endDate === null) {
+          const typical = insights.typicalPeriodLengthDays;
+          setEndDate(addDays(start, Math.max(0, Math.round(typical ?? ASSUMED_PERIOD_DAYS) - 1)));
+        }
       }
       setLoaded(true);
     })();
@@ -145,7 +153,11 @@ export function PeriodScreen({ navigation, route }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>
-        {editingId === undefined ? 'When did it start?' : 'Edit this period'}
+        {editingId === undefined
+          ? 'When did it start?'
+          : openedToEnd
+            ? 'When did it end?'
+            : 'Edit this period'}
       </Text>
       <Text style={styles.sub}>
         Pick the first day of bleeding. You can change any of this later.
