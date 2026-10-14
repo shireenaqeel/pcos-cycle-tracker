@@ -4,12 +4,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { differenceInCalendarDays, format, getHours } from 'date-fns';
 
 import { CycleRing } from '../components/CycleRing';
-import { Drift, FadeInUp } from '../components/Motion';
-import { Blob, Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
+import { FadeInUp } from '../components/Motion';
+import { GrassStrip, Landscape } from '../components/Scenery';
+import { Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
 import { listCycleLogs } from '../db/cycles';
 import { recordPredictionIfChanged } from '../db/predictions';
 import { LOCAL_USER_ID, getOrCreateProfile } from '../db/profile';
@@ -155,19 +155,7 @@ export function TodayScreen({ navigation }: Props) {
       </FadeInUp>
 
       <FadeInUp delay={80} style={styles.heroWrap}>
-        <Drift amount={12} seconds={16} style={styles.blobOne}>
-          <Blob color={colors.petal} size={240} />
-        </Drift>
-        <Drift amount={9} seconds={21} style={styles.blobTwo}>
-          <Blob color={colors.lilac} size={180} />
-        </Drift>
-
-        <LinearGradient
-          colors={[colors.gradientFrom, colors.gradientTo]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
+        <Landscape height={calendar.currentCycleDay === null ? 250 : 330}>
           {calendar.currentCycleDay === null || prediction === null ? (
             <View style={styles.emptyHero}>
               <Text style={styles.emptyHeadline}>Let's start with one date</Text>
@@ -202,7 +190,7 @@ export function TodayScreen({ navigation }: Props) {
               )}
             </>
           )}
-        </LinearGradient>
+        </Landscape>
       </FadeInUp>
 
       <SoftCard delay={160}>
@@ -301,6 +289,8 @@ export function TodayScreen({ navigation }: Props) {
             ))}
         </SoftCard>
       )}
+
+      <GrassStrip />
     </ScrollView>
   );
 }
@@ -375,25 +365,6 @@ const makeStyles = (colors: ThemeColors) =>
     },
     heroWrap: {
       marginVertical: spacing.sm,
-    },
-    blobOne: {
-      left: -70,
-      opacity: 0.55,
-      position: 'absolute',
-      top: -60,
-    },
-    blobTwo: {
-      bottom: -50,
-      opacity: 0.45,
-      position: 'absolute',
-      right: -50,
-    },
-    hero: {
-      alignItems: 'center',
-      borderRadius: radius.xl,
-      gap: spacing.xs,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.lg,
     },
     windowLine: {
       ...typography.bodySmall,

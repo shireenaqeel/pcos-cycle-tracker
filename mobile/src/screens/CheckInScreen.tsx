@@ -6,6 +6,7 @@ import { format, isToday } from 'date-fns';
 
 import { SleepSlider, StressScale, WaterMeter } from '../components/CheckInControls';
 import { FadeInUp } from '../components/Motion';
+import { PetalFall } from '../components/Scenery';
 import { Blob, Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
 import {
   DISCHARGE_OPTIONS,
@@ -82,6 +83,9 @@ export function CheckInScreen({ navigation, route }: Props) {
   const [basalTemp, setBasalTemp] = useState<number | null>(null);
   const [existingEntry, setExistingEntry] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Petals play over the sheet for a beat on save, so logging a day lands as a
+  // small moment rather than the screen simply vanishing.
+  const [celebrating, setCelebrating] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -139,7 +143,8 @@ export function CheckInScreen({ navigation, route }: Props) {
       otherNote: otherNote.trim() === '' ? null : otherNote.trim(),
     });
     successFeedback();
-    navigation.goBack();
+    setCelebrating(true);
+    setTimeout(() => navigation.goBack(), 620);
   }
 
   async function clearDay() {
@@ -327,6 +332,8 @@ export function CheckInScreen({ navigation, route }: Props) {
           there's something real to show a clinician.
         </Text>
       </ScrollView>
+
+      {celebrating && <PetalFall count={12} />}
 
       <View style={styles.saveBar}>
         <Squish onPress={save} disabled={busy} haptic={false}>

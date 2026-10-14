@@ -4,11 +4,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
 
 import { MonthCalendar } from '../components/MonthCalendar';
-import { Blob, SectionLabel, SoftCard } from '../components/Soft';
+import { GrassStrip, Landscape } from '../components/Scenery';
+import { SectionLabel, SoftCard } from '../components/Soft';
 import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
@@ -67,13 +67,7 @@ export function CalendarScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerWrap}>
-        <Blob color={colors.lilac} size={210} style={styles.blob} />
-        <LinearGradient
-          colors={[colors.gradientFrom, colors.gradientTo]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
+        <Landscape height={168}>
           {calendar.currentCycleDay === null ? (
             <Text style={styles.headerTitle}>Nothing recorded yet</Text>
           ) : (
@@ -87,7 +81,7 @@ export function CalendarScreen({ navigation }: Props) {
               )}
             </>
           )}
-        </LinearGradient>
+        </Landscape>
       </View>
 
       <MonthCalendar
@@ -108,6 +102,8 @@ export function CalendarScreen({ navigation }: Props) {
               : `${windowCount} windows ahead are shown. Each is wider than the last, because every cycle's uncertainty adds to the one before. They stop where they'd start overlapping.`}
         </Text>
       </SoftCard>
+
+      <GrassStrip />
     </ScrollView>
   );
 }
@@ -129,17 +125,6 @@ const makeStyles = (colors: ThemeColors) =>
     },
     headerWrap: {
       marginBottom: spacing.xs,
-    },
-    blob: {
-      opacity: 0.4,
-      position: 'absolute',
-      right: -60,
-      top: -50,
-    },
-    header: {
-      borderRadius: radius.xl,
-      gap: spacing.xs,
-      padding: spacing.lg,
     },
     headerTitle: {
       ...typography.title,

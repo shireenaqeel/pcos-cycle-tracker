@@ -839,3 +839,34 @@ TypeScript type — a device whose database predates a migration returns
 `undefined` for the new column, and `list.includes(...)` on that threw at
 startup. This is a genuine boundary between stored data and code, not
 defensiveness against our own callers.
+
+## Scenery
+
+`components/Scenery.tsx` gives the app a painted, pastoral feel: a washed sky
+that shifts with the time of day, clouds drifting across on their own
+schedules, two layers of hills, grass that sways out of step with itself, and
+petals that fall for a beat when a check-in saves.
+
+**Every shape is an original hand-authored SVG path.** The look is inspired by
+painted pastoral backdrops as a *style*; no character, frame or artwork is
+copied from any studio, and nothing in the app implies an affiliation. Keep it
+that way — the aesthetic is reproducible from primitives, the IP is not ours.
+
+Rules that keep it from becoming noise:
+
+- **Motion reads as weather, not animation.** Clouds take 58-104 seconds to
+  cross; grass sways over 2.6s. Anything faster competes with the content.
+- **Scenery sits behind, never under text.** Readable copy is drawn on its own
+  surface, so nothing legible fights a gradient.
+- **Petals are a moment, not a texture** — they play on save and stop.
+- Sky colours come from the active theme's tokens, so a theme change repaints
+  the scene too. `Meadow` leans furthest into the pastoral look.
+
+Two implementation notes worth not relearning:
+
+- `Landscape` takes a fixed `height` from the caller so the hills always meet
+  its bottom edge.
+- Animation hooks live in a per-item component (`DriftingCloud`, `Blade`,
+  `Petal`), never called from inside a `map`. The first version did call a hook
+  in a loop — stable only by accident, because the array length happened to be
+  constant.
