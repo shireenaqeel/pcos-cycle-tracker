@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS user_profile (
   theme TEXT,
   reminders_enabled INTEGER,
   reminder_hour INTEGER,
-  app_lock_enabled INTEGER
+  app_lock_enabled INTEGER,
+  contraception TEXT
 );
 
 CREATE TABLE IF NOT EXISTS cycle_log (
@@ -104,6 +105,14 @@ export const MIGRATIONS: { toVersion: number; columns: { table: string; column: 
       { table: 'daily_symptom_log', column: 'moods', type: 'TEXT' },
       { table: 'daily_symptom_log', column: 'discharge', type: 'TEXT' },
       { table: 'daily_symptom_log', column: 'sex', type: 'TEXT' },
+    ],
+  },
+  {
+    toVersion: 6,
+    columns: [
+      // Whether bleeds are real cycles or scheduled by a method changes what the
+      // clinical thresholds mean, so this is not merely profile decoration.
+      { table: 'user_profile', column: 'contraception', type: 'TEXT' },
     ],
   },
 ];

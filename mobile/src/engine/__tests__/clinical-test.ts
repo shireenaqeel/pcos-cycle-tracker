@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { clinicalReview } from '../clinical';
-import type { CycleLog, DailySymptomLog, FlowIntensity } from '../../types';
+import type { Contraception, CycleLog, DailySymptomLog, FlowIntensity } from '../../types';
 
 const NOW = new Date('2026-06-01T12:00:00.000Z');
 
@@ -47,8 +47,12 @@ function spaced(count: number, gap: number): CycleLog[] {
   );
 }
 
-function ids(cycles: CycleLog[], symptoms: DailySymptomLog[] = []): string[] {
-  return clinicalReview(cycles, symptoms, NOW).flags.map((flag) => flag.id);
+function ids(
+  cycles: CycleLog[],
+  symptoms: DailySymptomLog[] = [],
+  contraception: Contraception | null = null
+): string[] {
+  return clinicalReview(cycles, symptoms, NOW, contraception).flags.map((flag) => flag.id);
 }
 
 describe('staying quiet when there is nothing to say', () => {
@@ -145,5 +149,72 @@ describe('how findings are worded', () => {
       expect(flag.meaning).not.toMatch(/you have (PCOS|polycystic)/i);
       expect(flag.title).not.toMatch(/diagnos/i);
     }
+  });
+});
+
+describe('hormonal contraception makes cycle thresholds meaningless', () => {
+  const longCycles = spaced(6, 48);
+  const tidyPillBleeds = spaced(8, 28);
+
+  it('withholds every cycle-length check on a method that suppresses ovulation', () => {
+    const flags = ids(longCycles, [], 'combined_pill');
+
+    for (const withheld of ['long-cycles', 'short-cycles', 'wide-spread', 'few-periods']) {
+      expect(flags).not.toContain(withheld);
+    }
+  });
+
+  it('explains why they are absent rather than just going quiet', () => {
+    const review = clinicalReview(longCycles, [], NOW, 'hormonal_iud');
+    const context = review.flags.find((flag) => flag.id === 'hormonal-contraception');
+
+    expect(context).toBeDefined();
+    expect(context?.level).toBe('context');
+    expect(context?.finding).toContain('hormonal iud');
+    // It leads, so it reads as the reason the other checks are missing.
+    expect(review.flags[0].id).toBe('hormonal-contraception');
+  });
+
+  it('does not treat a scheduled absence of bleeding as a missed period', () => {
+    // No bleed for months is expected on a continuous regimen.
+    expect(ids([cycle('2026-01-05')], [], 'implant')).not.toContain('no-period-90');
+    expect(ids([cycle('2026-01-05')], [], 'implant')).toContain('hormonal-contraception');
+  });
+
+  it('still raises heavy and prolonged bleeding, which matter on any method', () => {
+    const heavy = [day('2026-05-21', 'heavy'), day('2026-05-22', 'clots'), day('2026-05-23', 'heavy')];
+    const flags = ids([cycle('2026-05-01', '2026-05-12')], heavy, 'combined_pill');
+
+    expect(flags).toContain('long-bleed');
+    expect(flags).toContain('heavy-flow');
+  });
+
+  it('is not falsely reassuring: tidy pill bleeds produce no all-clear', () => {
+    const review = clinicalReview(tidyPillBleeds, [], NOW, 'combined_pill');
+
+    // The screen shows an all-clear only when flags are empty and cycles are
+    // measured; the context flag must prevent that from ever reading as one.
+    expect(review.flags.length).toBeGreaterThan(0);
+    expect(review.flags[0].id).toBe('hormonal-contraception');
+  });
+});
+
+describe('non-hormonal methods leave the checks alone', () => {
+  it('treats a copper IUD exactly as no method, since it does not stop ovulation', () => {
+    const history = spaced(6, 48);
+    expect(ids(history, [], 'copper_iud')).toEqual(ids(history, [], null));
+  });
+
+  it('treats barrier methods the same way', () => {
+    const history = spaced(6, 18);
+    expect(ids(history, [], 'barrier')).toEqual(ids(history, [], null));
+  });
+
+  it('keeps checking when the method is unknown, rather than hiding a pattern', () => {
+    expect(ids(spaced(6, 48), [], 'other')).toContain('long-cycles');
+  });
+
+  it("does not add the context flag when there's nothing to explain", () => {
+    expect(ids(spaced(6, 29), [], 'none')).not.toContain('hormonal-contraception');
   });
 });

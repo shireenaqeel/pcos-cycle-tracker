@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CycleLengthChart, FrequencyBars } from '../components/CycleChart';
 import { SYMPTOM_LABELS } from '../content/trackers';
 import { listCycleLogs } from '../db/cycles';
-import { LOCAL_USER_ID } from '../db/profile';
+import { LOCAL_USER_ID, getOrCreateProfile } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { cycleGaps } from '../engine/gaps';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
@@ -35,14 +35,15 @@ export function InsightsScreen({ navigation }: Props) {
     useCallback(() => {
       let active = true;
       (async () => {
-        const [loadedCycles, symptoms] = await Promise.all([
+        const [profile, loadedCycles, symptoms] = await Promise.all([
+          getOrCreateProfile(),
           listCycleLogs(LOCAL_USER_ID),
           listSymptomLogs(LOCAL_USER_ID),
         ]);
         if (!active) return;
         setCycles(loadedCycles);
         setPhases(phaseInsights(loadedCycles, symptoms));
-        setReview(clinicalReview(loadedCycles, symptoms));
+        setReview(clinicalReview(loadedCycles, symptoms, new Date(), profile.contraception));
 
         // Most-logged symptoms, so the chart shows what actually recurs.
         const tally = new Map<string, number>();
@@ -87,7 +88,11 @@ export function InsightsScreen({ navigation }: Props) {
 
       {review !== null && review.flags.length > 0 && (
         <View style={styles.flagCard}>
-          <Text style={styles.cardLabel}>Worth raising with a clinician</Text>
+          <Text style={styles.cardLabel}>
+            {review.flags.every((flag) => flag.level === 'context')
+              ? 'About your records'
+              : 'Worth raising with a clinician'}
+          </Text>
           <Text style={styles.cardBody}>
             Your records match patterns that published guidelines say are worth getting checked.
             This is not a diagnosis and this app cannot give you one — it is a prompt to ask.
@@ -99,7 +104,14 @@ export function InsightsScreen({ navigation }: Props) {
                 <View
                   style={[
                     styles.flagDot,
-                    { backgroundColor: flag.level === 'discuss' ? colors.accent : colors.apricot },
+                    {
+                      backgroundColor:
+                        flag.level === 'discuss'
+                          ? colors.accent
+                          : flag.level === 'watch'
+                            ? colors.apricot
+                            : colors.sage,
+                    },
                   ]}
                 />
                 <Text style={styles.flagTitle}>{flag.title}</Text>

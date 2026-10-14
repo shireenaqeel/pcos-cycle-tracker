@@ -1,8 +1,10 @@
+import { CONTRACEPTION_LABELS, suppressesOvulation } from '../content/contraception';
 import { cycleGaps } from './gaps';
 import { cycleInsights } from './insights';
-import type { CycleLog, DailySymptomLog } from '../types';
+import type { Contraception, CycleLog, DailySymptomLog } from '../types';
 
-export type FlagLevel = 'watch' | 'discuss';
+/** `context` explains why a check is not being made, rather than reporting a finding. */
+export type FlagLevel = 'context' | 'watch' | 'discuss';
 
 export interface ClinicalFlag {
   id: string;
@@ -56,12 +58,23 @@ function daysSince(iso: string, now: Date): number {
  * The bar for saying anything is deliberately high: with one or two cycles
  * almost any history looks irregular, and frightening someone over three data
  * points would be worse than staying quiet.
+ *
+ * **Hormonal contraception changes what the recorded bleeds are.** On a method
+ * that suppresses ovulation they are withdrawal bleeds scheduled by the method,
+ * not the body's own cycle, so every cycle-length threshold here becomes
+ * meaningless — falsely reassuring on a pill that produces tidy 28-day bleeds,
+ * falsely alarming on a continuous regimen that produces none. Guidelines say
+ * cycle-pattern assessment cannot be done reliably on it. Those checks are
+ * therefore withheld and explained. Bleeding that is heavy or prolonged is
+ * still worth raising on any method, so those two flags remain.
  */
 export function clinicalReview(
   cycles: CycleLog[],
   symptoms: DailySymptomLog[],
-  now: Date = new Date()
+  now: Date = new Date(),
+  contraception: Contraception | null = null
 ): ClinicalReview {
+  const bleedsAreScheduled = suppressesOvulation(contraception);
   const insights = cycleInsights(cycles, now);
   const gaps = cycleGaps(cycles).map((gap) => gap.cycleLengthDays);
   const flags: ClinicalFlag[] = [];
@@ -69,8 +82,9 @@ export function clinicalReview(
   const starts = cycles.map((cycle) => cycle.startDate).sort((a, b) => a.localeCompare(b));
   const lastStart = starts.length === 0 ? null : starts[starts.length - 1];
 
-  // Checked regardless of how many cycles exist: a long absence stands alone.
-  if (lastStart !== null) {
+  // Checked regardless of how many cycles exist: a long absence stands alone —
+  // unless the method is the reason there is no bleed.
+  if (lastStart !== null && !bleedsAreScheduled) {
     const since = daysSince(lastStart, now);
     if (since >= NO_PERIOD_DAYS) {
       flags.push({
@@ -118,9 +132,10 @@ export function clinicalReview(
     });
   }
 
-  // Everything below compares cycle lengths, which needs a few cycles to mean anything.
+  // Everything below compares cycle lengths, which needs a few cycles to mean
+  // anything — and needs those cycles to be the body's own.
   const enough = gaps.length >= 3;
-  if (enough) {
+  if (enough && !bleedsAreScheduled) {
     const longCycles = gaps.filter((days) => days > LONG_CYCLE_DAYS);
     if (longCycles.length >= 2) {
       flags.push({
@@ -162,7 +177,7 @@ export function clinicalReview(
   // Needs a year of history behind it before the count means anything.
   const oldestStart = starts.length === 0 ? null : starts[0];
   const trackedLongEnough = oldestStart !== null && daysSince(oldestStart, now) >= 330;
-  if (trackedLongEnough && insights.periodsInLastYear < FEW_PERIODS_PER_YEAR) {
+  if (trackedLongEnough && !bleedsAreScheduled && insights.periodsInLastYear < FEW_PERIODS_PER_YEAR) {
     flags.push({
       id: 'few-periods',
       level: 'discuss',
@@ -170,6 +185,20 @@ export function clinicalReview(
       finding: `You have recorded ${insights.periodsInLastYear} in the last 12 months.`,
       meaning:
         'Fewer than eight cycles a year is one of the ways the PCOS guideline defines irregular cycles in adults. It is a reason to ask, not an answer.',
+      source: GUIDELINE_PCOS,
+    });
+  }
+
+  if (bleedsAreScheduled && contraception !== null) {
+    // Leads the list, so it reads as the reason the usual checks are absent
+    // rather than as one more finding among them.
+    flags.unshift({
+      id: 'hormonal-contraception',
+      level: 'context',
+      title: 'Cycle-length checks are on hold',
+      finding: `You've recorded that you're using ${CONTRACEPTION_LABELS[contraception].toLowerCase()}.`,
+      meaning:
+        'Bleeding on a hormonal method is scheduled by the method rather than by your own cycle, so the usual thresholds for cycle length, regularity and how many periods a year would be misleading here — in either direction. Heavy or prolonged bleeding is still worth raising, and those checks continue.',
       source: GUIDELINE_PCOS,
     });
   }

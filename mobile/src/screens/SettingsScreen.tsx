@@ -15,10 +15,12 @@ import { Alert, Switch } from 'react-native';
 
 import { listCycleLogs } from '../db/cycles';
 import { deleteAllRecords } from '../db/reset';
+import { CONTRACEPTION_OPTIONS } from '../content/contraception';
 import {
   LOCAL_USER_ID,
   getOrCreateProfile,
   setAppLock,
+  setContraception,
   setPhenotype,
   setReminderPrefs,
 } from '../db/profile';
@@ -38,7 +40,7 @@ import { successFeedback, warningFeedback } from '../lib/feedback';
 import { paletteFor, THEME_OPTIONS, useTheme } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
-import type { Phenotype } from '../types';
+import type { Contraception, Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -55,6 +57,7 @@ export function SettingsScreen(_props: Props) {
   const { themeName, chooseTheme } = useTheme();
   const dark = useColorScheme() === 'dark';
   const [phenotype, setCurrent] = useState<Phenotype | null>(null);
+  const [method, setMethod] = useState<Contraception | null>(null);
   const [counts, setCounts] = useState<{ cycles: number; symptoms: number } | null>(null);
   const [reminders, setReminders] = useState(false);
   const [reminderHour, setReminderHour] = useState(20);
@@ -72,6 +75,7 @@ export function SettingsScreen(_props: Props) {
         ]);
         if (!active) return;
         setCurrent(profile.phenotype);
+        setMethod(profile.contraception);
         setCounts({ cycles: cycles.length, symptoms: symptoms.length });
         setReminders(profile.remindersEnabled);
         setReminderHour(profile.reminderHour);
@@ -264,6 +268,34 @@ export function SettingsScreen(_props: Props) {
                   {option.label}
                 </Text>
                 <Text style={styles.themeBlurb}>{option.blurb}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Contraception</Text>
+        <Text style={styles.cardBody}>
+          On a hormonal method, bleeding is scheduled by the method rather than your own cycle, so
+          the cycle-length checks on Your numbers would be misleading. Telling the app lets it hold
+          those back instead of reading them wrongly.
+        </Text>
+        <View style={styles.options}>
+          {CONTRACEPTION_OPTIONS.map((option) => {
+            const selected = method === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                style={[styles.option, selected && styles.optionSelected]}
+                onPress={() => {
+                  setMethod(option.value);
+                  void setContraception(option.value);
+                }}
+              >
+                <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+                  {option.label}
+                </Text>
               </Pressable>
             );
           })}

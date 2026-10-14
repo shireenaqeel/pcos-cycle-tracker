@@ -1,5 +1,18 @@
 export type ThemeName = 'blush' | 'meadow' | 'dusk' | 'clay';
 
+export type Contraception =
+  | 'none'
+  | 'combined_pill'
+  | 'progestogen_pill'
+  | 'hormonal_iud'
+  | 'implant'
+  | 'injection'
+  | 'ring'
+  | 'patch'
+  | 'copper_iud'
+  | 'barrier'
+  | 'other';
+
 export type Phenotype = 'regular' | 'mildly_irregular' | 'diagnosed_pcos' | 'unknown';
 
 export interface UserProfile {
@@ -14,6 +27,7 @@ export interface UserProfile {
   /** Hour of day, 0-23, for the daily nudge. */
   reminderHour: number;
   appLockEnabled: boolean;
+  contraception: Contraception | null;
 }
 
 export type EntrySource = 'logged' | 'backfilled';

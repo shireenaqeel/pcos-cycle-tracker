@@ -13,11 +13,12 @@ import { format } from 'date-fns';
 
 import { DateGrid } from '../components/DateGrid';
 import { insertCycleLog } from '../db/cycles';
-import { LOCAL_USER_ID, setDisplayName, setPhenotype } from '../db/profile';
+import { CONTRACEPTION_OPTIONS } from '../content/contraception';
+import { LOCAL_USER_ID, setContraception, setDisplayName, setPhenotype } from '../db/profile';
 import { toIsoDate } from '../lib/dates';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
-import type { Phenotype } from '../types';
+import type { Contraception, Phenotype } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
@@ -47,14 +48,22 @@ const PHENOTYPE_OPTIONS: { value: Phenotype; label: string; hint: string }[] = [
 export function OnboardingScreen({ navigation }: Props) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
-  const [step, setStep] = useState<'intro' | 'name' | 'phenotype' | 'lastPeriod'>('intro');
+  const [step, setStep] = useState<'intro' | 'name' | 'phenotype' | 'method' | 'lastPeriod'>(
+    'intro'
+  );
   const [name, setName] = useState('');
   const [chosen, setChosen] = useState<Phenotype | null>(null);
+  const [method, setMethod] = useState<Contraception | null>(null);
   const [lastPeriod, setLastPeriod] = useState(() => new Date());
   const [busy, setBusy] = useState(false);
 
   function choosePhenotype(value: Phenotype) {
     setChosen(value);
+    setStep('method');
+  }
+
+  function chooseMethod(value: Contraception) {
+    setMethod(value);
     setStep('lastPeriod');
   }
 
@@ -62,6 +71,7 @@ export function OnboardingScreen({ navigation }: Props) {
     setBusy(true);
     if (name.trim() !== '') await setDisplayName(name);
     if (chosen !== null) await setPhenotype(chosen);
+    if (method !== null) await setContraception(method);
     if (withLastPeriod) {
       // Remembered at sign-up, so it is backfilled — not something logged as it happened.
       await insertCycleLog({
@@ -76,7 +86,7 @@ export function OnboardingScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.progress}>
-        {(['intro', 'name', 'phenotype', 'lastPeriod'] as const).map((stepName) => (
+        {(['intro', 'name', 'phenotype', 'method', 'lastPeriod'] as const).map((stepName) => (
           <View key={stepName} style={[styles.pip, step === stepName && styles.pipActive]} />
         ))}
       </View>
@@ -91,7 +101,7 @@ export function OnboardingScreen({ navigation }: Props) {
           </Text>
           <Text style={styles.paragraph}>
             This one learns from your own history and always shows a window with how likely it is.
-            Three quick questions and you're set.
+            A few quick questions and you're set.
           </Text>
           <Text style={styles.footnote}>
             It can't detect or diagnose PCOS, and it isn't a substitute for a clinician.
@@ -149,6 +159,28 @@ export function OnboardingScreen({ navigation }: Props) {
               >
                 <Text style={styles.optionLabel}>{option.label}</Text>
                 <Text style={styles.optionHint}>{option.hint}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {step === 'method' && (
+        <View style={styles.stepBody}>
+          <Text style={styles.title}>Are you using contraception?</Text>
+          <Text style={styles.paragraph}>
+            This matters more than it sounds. On a hormonal method your bleeds are scheduled by the
+            method rather than by your own cycle, so the app must not read them as cycle patterns —
+            it would draw the wrong conclusions in both directions.
+          </Text>
+          <View style={styles.options}>
+            {CONTRACEPTION_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={({ pressed }) => [styles.option, pressed && styles.optionPressed]}
+                onPress={() => chooseMethod(option.value)}
+              >
+                <Text style={styles.optionLabel}>{option.label}</Text>
               </Pressable>
             ))}
           </View>

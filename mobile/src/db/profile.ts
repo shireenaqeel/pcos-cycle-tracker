@@ -1,5 +1,5 @@
 import { getDb } from './client';
-import type { Phenotype, UserProfile } from '../types';
+import type { Contraception, Phenotype, UserProfile } from '../types';
 
 const LOCAL_USER_ID = 'local'; // single-user, on-device; no auth for the MVP
 
@@ -13,6 +13,7 @@ interface UserProfileRow {
   reminders_enabled: number | null;
   reminder_hour: number | null;
   app_lock_enabled: number | null;
+  contraception: string | null;
 }
 
 function rowToProfile(row: UserProfileRow): UserProfile {
@@ -26,6 +27,7 @@ function rowToProfile(row: UserProfileRow): UserProfile {
     remindersEnabled: row.reminders_enabled === 1,
     reminderHour: row.reminder_hour ?? 20,
     appLockEnabled: row.app_lock_enabled === 1,
+    contraception: row.contraception as UserProfile['contraception'],
   };
 }
 
@@ -53,6 +55,7 @@ export async function getOrCreateProfile(): Promise<UserProfile> {
     remindersEnabled: false,
     reminderHour: 20,
     appLockEnabled: false,
+    contraception: null,
   };
 }
 
@@ -77,6 +80,11 @@ export async function setReminderPrefs(input: {
     input.hour,
     LOCAL_USER_ID
   );
+}
+
+export async function setContraception(value: Contraception): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(`UPDATE user_profile SET contraception = ? WHERE id = ?`, value, LOCAL_USER_ID);
 }
 
 export async function setAppLock(enabled: boolean): Promise<void> {

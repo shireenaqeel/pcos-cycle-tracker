@@ -948,3 +948,39 @@ reason about, with no server copy to reconcile against.
 
 The restore always confirms with counts first. Those counts are the only way
 someone can tell a sensible merge from the wrong file.
+
+## Contraception is a safety input, not profile decoration
+
+`clinicalReview` previously counted every recorded bleed as a cycle. On a
+hormonal method those are **withdrawal bleeds scheduled by the method**, not the
+body's own cycle, and guidelines say cycle-pattern assessment cannot be done
+reliably on it. Reading them as cycles fails in both directions:
+
+- **Falsely reassuring** — a combined pill produces tidy 28-day bleeds, so every
+  threshold passes and the screen would imply nothing needs looking at.
+- **Falsely alarming** — a continuous regimen produces no bleed, which tripped
+  "no period for three months" when that is the expected result of the method.
+
+A real Flo user was wrongly flagged at risk of PCOS after starting birth
+control. That is the failure this guards against.
+
+So `clinicalReview` takes the method and, when it suppresses ovulation,
+withholds every cycle-length check (`long-cycles`, `short-cycles`,
+`wide-spread`, `few-periods`, `no-period-90`) and leads with one `context` flag
+explaining why they are absent. `long-bleed` and `heavy-flow` **always remain** —
+those matter on any method.
+
+`suppressesOvulation` in `src/content/contraception.ts` is the single source of
+truth, deliberately free of icon or native imports so `engine/` can share it.
+Judgement calls baked in:
+
+- **Copper IUD and barrier methods do not suppress ovulation**, so cycles stay
+  real and every check continues. Tested as behaving identically to no method.
+- **`other` is treated as non-suppressing**, because we do not know. A flag that
+  wrongly prompts someone to ask a clinician is a smaller harm than silently
+  hiding a real pattern.
+- The `context` flag is **unshifted to the front** so it reads as the reason the
+  other checks are missing, and its presence means the "nothing crossed the
+  thresholds" all-clear can never render alongside it.
+
+Asked during onboarding and editable in Settings.
