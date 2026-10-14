@@ -898,3 +898,21 @@ all rather than failing loudly, so guessing them is not safe.
   someone is trying to see and what a clinician asks about.
 - `FrequencyBars`: what gets logged most, so recurring symptoms are visible
   rather than buried in history.
+
+## Palette rules
+
+The first palettes were very low-chroma pastels, which read as washed out and
+lifeless. All four were rebuilt with real saturation: vivid accents, warm
+cream grounds rather than near-white, and category tints with enough chroma to
+carry a card on their own (`petal`, `sage`, `apricot`, `lilac`).
+
+**Contrast is verified, not eyeballed.** `colors.text` is drawn directly on
+`background`, `surface`, all four tints, `accentSoft` and both gradient stops,
+and `onAccent` sits on `accent` — 80 pairs across four themes × light and
+dark. Every pair must clear **WCAG AA (4.5:1)**; the current lowest is 4.56.
+
+Saturating the tints initially broke 8 of those pairs. The fix was computed —
+darken the offending colour in 1% steps until it clears, which preserves the
+hue — rather than guessed. **Re-run that check after any palette edit**, since
+a livelier colour that makes text unreadable is a worse outcome than a dull
+one, especially on a screen someone reads while unwell.
