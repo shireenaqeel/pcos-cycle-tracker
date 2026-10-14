@@ -1,4 +1,5 @@
 import { cycleGaps } from './gaps';
+import { LUTEAL_MEAN_DAYS, LUTEAL_STD_DEV_DAYS, type OvulationSignal } from './ovulation';
 import { zForCentralConfidence } from './stats';
 import type { CycleLog, CycleRangePrediction, Phenotype } from '../types';
 
@@ -10,7 +11,7 @@ import type { CycleLog, CycleRangePrediction, Phenotype } from '../types';
  * transfer learning — Phase 2 (a pretrained-and-fine-tuned model) is gated
  * on having a real aggregate dataset, which this MVP does not have yet.
  */
-export const MODEL_VERSION = 'phase1-hierarchical-bayes-v2';
+export const MODEL_VERSION = 'phase1-hierarchical-bayes-v3';
 
 interface PhenotypePrior {
   /** Prior belief about the mean cycle length, in days. */
@@ -120,14 +121,32 @@ function posteriorFor(logs: CycleLog[], phenotype: Phenotype | null): Posterior 
 export function predictNextCycle(
   logs: CycleLog[],
   phenotype: Phenotype | null,
-  confidence: number = DEFAULT_CONFIDENCE
+  confidence: number = DEFAULT_CONFIDENCE,
+  signal: OvulationSignal | null = null
 ): CycleRangePrediction {
+  const z = zForCentralConfidence(confidence);
+
+  // A measured ovulation replaces the cycle-length estimate rather than
+  // adjusting it. Counting from a known ovulation to a fairly fixed luteal
+  // phase is a much shorter inferential leap than guessing a whole cycle's
+  // length — which is why this narrows the window so much for an irregular
+  // history, and why it is the only honest route to a tight prediction.
+  if (signal !== null) {
+    const centre = signal.cycleDay + LUTEAL_MEAN_DAYS;
+    return {
+      rangeStartDay: Math.round(centre - z * LUTEAL_STD_DEV_DAYS),
+      rangeEndDay: Math.round(centre + z * LUTEAL_STD_DEV_DAYS),
+      confidence,
+      meanCycleLength: centre,
+      stdDevCycleLength: LUTEAL_STD_DEV_DAYS,
+    };
+  }
+
   const posterior = posteriorFor(logs, phenotype);
 
   // Predicting the next *actual* cycle length, not just the mean, so intrinsic
   // variability still applies on top of whatever we now know about the mean.
   const predictiveStdDev = Math.sqrt(posterior.varianceOfMean + posterior.cycleVariance);
-  const z = zForCentralConfidence(confidence);
 
   return {
     rangeStartDay: Math.round(posterior.mean - z * predictiveStdDev),
@@ -168,7 +187,8 @@ export function projectCycleWindows(
   logs: CycleLog[],
   phenotype: Phenotype | null,
   confidence: number = DEFAULT_CONFIDENCE,
-  maxCycles = 6
+  maxCycles = 6,
+  signal: OvulationSignal | null = null
 ): ProjectedWindow[] {
   const posterior = posteriorFor(logs, phenotype);
   const z = zForCentralConfidence(confidence);
@@ -188,5 +208,21 @@ export function projectCycleWindows(
     windows.push({ cycleIndex, rangeStartDay, rangeEndDay, confidence });
   }
 
-  return windows;
+  if (signal === null) return windows;
+
+  // The next window comes from the measurement instead; later ones still have no
+  // ovulation to anchor to. Any that would now overlap the tighter first window
+  // is dropped, keeping the rule that no day belongs to two cycles.
+  const next = predictNextCycle(logs, phenotype, confidence, signal);
+  const anchored: ProjectedWindow = {
+    cycleIndex: 1,
+    rangeStartDay: next.rangeStartDay,
+    rangeEndDay: next.rangeEndDay,
+    confidence,
+  };
+
+  return [
+    anchored,
+    ...windows.filter((window) => window.cycleIndex > 1 && window.rangeStartDay > anchored.rangeEndDay),
+  ];
 }

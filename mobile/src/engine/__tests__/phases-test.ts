@@ -38,6 +38,7 @@ function day(
     moods: [],
     discharge: null,
     sex: [],
+    lhTest: null,
   };
 }
 

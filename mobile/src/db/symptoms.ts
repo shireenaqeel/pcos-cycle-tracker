@@ -26,6 +26,7 @@ interface DailySymptomLogRow {
   moods: string | null;
   discharge: string | null;
   sex: string | null;
+  lh_test: string | null;
 }
 
 /** Derived from user and date so a day can only ever hold one entry. */
@@ -75,6 +76,7 @@ function rowToSymptomLog(row: DailySymptomLogRow): DailySymptomLog {
     moods: moodsFor(row),
     discharge: row.discharge as DischargeType | null,
     sex: parseList<SexTag>(row.sex),
+    lhTest: row.lh_test as DailySymptomLog['lhTest'],
   };
 }
 
@@ -117,14 +119,15 @@ export async function saveSymptomLog(input: {
   moods: MoodTag[];
   discharge: DischargeType | null;
   sex: SexTag[];
+  lhTest: DailySymptomLog['lhTest'];
 }): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR REPLACE INTO daily_symptom_log
        (id, user_id, date, symptom_tags, basal_temp, mood,
         stress_level, hydration_glasses, sleep_hours, movement, food_note, other_note,
-        flow, medications, moods, discharge, sex)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        flow, medications, moods, discharge, sex, lh_test)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     symptomLogId(input.userId, input.date),
     input.userId,
     input.date,
@@ -141,7 +144,8 @@ export async function saveSymptomLog(input: {
     input.medications,
     JSON.stringify(input.moods),
     input.discharge,
-    JSON.stringify(input.sex)
+    JSON.stringify(input.sex),
+    input.lhTest
   );
 }
 

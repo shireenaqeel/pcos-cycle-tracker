@@ -14,6 +14,7 @@ import { listCycleLogs } from '../db/cycles';
 import { recordPredictionIfChanged } from '../db/predictions';
 import { LOCAL_USER_ID, getOrCreateProfile } from '../db/profile';
 import { getSymptomLogForDate, listSymptomLogs, saveSymptomLog } from '../db/symptoms';
+import { detectOvulation, type OvulationSignal } from '../engine/ovulation';
 import { MODEL_VERSION, predictNextCycle, projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
@@ -42,6 +43,7 @@ interface Loaded {
   calendar: CycleCalendar;
   today: DailySymptomLog | null;
   name: string | null;
+  signal: OvulationSignal | null;
 }
 
 /** A handful of common ones for a one-tap log; the full set lives in the check-in. */
@@ -66,8 +68,15 @@ export function TodayScreen({ navigation }: Props) {
       getSymptomLogForDate(profile.id, toIsoDate(new Date())),
     ]);
 
-    const prediction = cycles.length === 0 ? null : predictNextCycle(cycles, profile.phenotype);
-    const windows = cycles.length === 0 ? [] : projectCycleWindows(cycles, profile.phenotype);
+    const lastStart = cycles.length === 0 ? null : cycles[cycles.length - 1].startDate;
+    const signal = lastStart === null ? null : detectOvulation(symptoms, lastStart);
+
+    const prediction =
+      cycles.length === 0 ? null : predictNextCycle(cycles, profile.phenotype, undefined, signal);
+    const windows =
+      cycles.length === 0
+        ? []
+        : projectCycleWindows(cycles, profile.phenotype, undefined, undefined, signal);
     const calendar = buildCycleCalendar(cycles, symptoms, windows);
 
     if (calendar.predictedWindow !== null && prediction !== null) {
@@ -91,7 +100,7 @@ export function TodayScreen({ navigation }: Props) {
       }
     }
 
-    return { cycles, prediction, calendar, today, name: profile.displayName };
+    return { cycles, prediction, calendar, today, name: profile.displayName, signal };
   }, []);
 
   useFocusEffect(
@@ -114,7 +123,7 @@ export function TodayScreen({ navigation }: Props) {
     );
   }
 
-  const { cycles, prediction, calendar, today, name } = data;
+  const { cycles, prediction, calendar, today, name, signal } = data;
   const bleedingToday = calendar.periodDates.has(toIsoDate(new Date()));
   // The most recent period with no end date recorded. While one exists, ending
   // it is the action someone is most likely here for — previously the only way
@@ -142,6 +151,7 @@ export function TodayScreen({ navigation }: Props) {
       otherNote: today?.otherNote ?? null,
       flow: today?.flow ?? null,
       medications: today?.medications ?? null,
+      lhTest: today?.lhTest ?? null,
     });
     successFeedback();
     setData(await load());
@@ -245,9 +255,9 @@ export function TodayScreen({ navigation }: Props) {
         <SoftCard delay={300}>
           <SectionLabel>What this is based on</SectionLabel>
           <Text style={styles.cardBody}>
-            {cycles.length} recorded {cycles.length === 1 ? 'period' : 'periods'}, giving a typical
-            cycle of about {Math.round(prediction.meanCycleLength)} days. The window is wide when
-            your history is short or uneven, and narrows as it grows.
+            {signal === null
+              ? `${cycles.length} recorded ${cycles.length === 1 ? 'period' : 'periods'}, giving a typical cycle of about ${Math.round(prediction.meanCycleLength)} days. The window is wide when your history is short or uneven, and narrows as it grows.`
+              : `An ovulation signal on day ${signal.cycleDay} of this cycle, from ${signal.source === 'lh' ? 'your LH test' : 'your temperature rise'}. Counting forward from that is far tighter than estimating a whole cycle's length, which is why this window is narrow.`}
           </Text>
           <Text style={styles.disclaimer}>
             A likely range from your own data — not a diagnosis, and not a guarantee.

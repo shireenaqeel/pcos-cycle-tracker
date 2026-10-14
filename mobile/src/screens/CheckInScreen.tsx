@@ -9,6 +9,7 @@ import { FadeInUp } from '../components/Motion';
 import { PetalFall } from '../components/Scenery';
 import { Blob, SectionLabel, SoftCard, Squish } from '../components/Soft';
 import { TileGrid } from '../components/TileGrid';
+import type { TrackerOption } from '../content/trackers';
 import {
   DISCHARGE_OPTIONS,
   FLOW_OPTIONS,
@@ -32,6 +33,7 @@ import {
 } from '../theme';
 import type {
   DischargeType,
+  LhTest,
   FlowIntensity,
   MoodTag,
   MovementLevel,
@@ -40,6 +42,21 @@ import type {
 } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CheckIn'>;
+
+const LH_OPTIONS: TrackerOption<LhTest>[] = [
+  { value: 'negative', label: 'LH negative', icon: 'minus-circle-outline' },
+  { value: 'positive', label: 'LH positive', icon: 'check-circle-outline' },
+];
+
+/**
+ * Keeps a previously stored reading when the box is left untouched, so saving a
+ * day does not quietly erase a temperature taken earlier.
+ */
+function readTemperature(text: string, stored: number | null): number | null {
+  if (text.trim() === '') return null;
+  const parsed = Number(text.trim());
+  return Number.isFinite(parsed) ? parsed : stored;
+}
 
 /** Adds or removes a value, so every grid behaves identically. */
 function toggle<T>(list: T[], value: T): T[] {
@@ -72,9 +89,10 @@ export function CheckInScreen({ navigation, route }: Props) {
   const [sleep, setSleep] = useState(0);
   const [movement, setMovement] = useState<MovementLevel | null>(null);
   const [medications, setMedications] = useState('');
+  const [lhTest, setLhTest] = useState<LhTest | null>(null);
+  const [basalTempText, setBasalTempText] = useState('');
   const [foodNote, setFoodNote] = useState('');
   const [otherNote, setOtherNote] = useState('');
-  // Not editable here, but carried through so an older reading isn't wiped.
   const [basalTemp, setBasalTemp] = useState<number | null>(null);
   const [existingEntry, setExistingEntry] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -99,6 +117,8 @@ export function CheckInScreen({ navigation, route }: Props) {
       setFoodNote(entry.foodNote ?? '');
       setOtherNote(entry.otherNote ?? '');
       setBasalTemp(entry.basalTemp);
+      setBasalTempText(entry.basalTemp === null ? '' : String(entry.basalTemp));
+      setLhTest(entry.lhTest);
       setExistingEntry(true);
     });
     return () => {
@@ -123,7 +143,8 @@ export function CheckInScreen({ navigation, route }: Props) {
       userId: LOCAL_USER_ID,
       date: isoDate,
       symptomTags: tags,
-      basalTemp,
+      basalTemp: readTemperature(basalTempText, basalTemp),
+      lhTest,
       mood: null,
       moods,
       discharge,
@@ -249,6 +270,30 @@ export function CheckInScreen({ navigation, route }: Props) {
             tint={colors.sage}
             selected={movement === null ? [] : [movement]}
             onToggle={(value) => setMovement(movement === value ? null : value)}
+          />
+        </SoftCard>
+
+        <SoftCard tint={colors.lilac}>
+          <SectionLabel>Ovulation signals</SectionLabel>
+          <Text style={styles.note}>
+            Optional, and only worth it if you already test or take your temperature. A measured
+            ovulation predicts your next period far better than counting days — especially when
+            cycles are irregular.
+          </Text>
+          <TileGrid
+            options={LH_OPTIONS}
+            tint={colors.surface}
+            selected={lhTest === null ? [] : [lhTest]}
+            onToggle={(value) => setLhTest(lhTest === value ? null : value)}
+          />
+          <TextInput
+            style={styles.input}
+            value={basalTempText}
+            onChangeText={setBasalTempText}
+            placeholder="Waking temperature, e.g. 36.6"
+            placeholderTextColor={colors.textFaint}
+            keyboardType="decimal-pad"
+            inputMode="decimal"
           />
         </SoftCard>
 

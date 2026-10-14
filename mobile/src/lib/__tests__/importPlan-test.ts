@@ -34,6 +34,7 @@ function log(date: string, stressLevel: number | null = null): DailySymptomLog {
     otherNote: null,
     flow: null,
     medications: null,
+    lhTest: null,
   };
 }
 

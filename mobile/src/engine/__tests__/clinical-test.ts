@@ -36,6 +36,7 @@ function day(date: string, flow: FlowIntensity | null = null): DailySymptomLog {
     otherNote: null,
     flow,
     medications: null,
+    lhTest: null,
   };
 }
 

@@ -65,6 +65,7 @@ function asLog(raw: unknown): DailySymptomLog | null {
     otherNote: str(record.otherNote),
     flow: str(record.flow) as DailySymptomLog['flow'],
     medications: str(record.medications),
+    lhTest: str(record.lhTest) as DailySymptomLog['lhTest'],
   };
 }
 

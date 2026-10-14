@@ -984,3 +984,44 @@ Judgement calls baked in:
   thresholds" all-clear can never render alongside it.
 
 Asked during onboarding and editable in Settings.
+
+## Ovulation signals — why the prediction can get tight
+
+Published figures: calendar-only prediction is around 18% accurate for
+irregular PCOS cycles, symptom-based around 34%, while logging LH tests and
+basal temperature reaches around 79%. The gap is the whole justification for
+`src/engine/ovulation.ts`.
+
+The mechanism matters. Counting from a **measured ovulation** to a fairly fixed
+luteal phase is a much shorter inferential leap than guessing an entire cycle's
+length, and the luteal phase varies far less between cycles than cycle length
+does. That is why a signal narrows the window so much, and why it helps most
+exactly where calendar counting fails worst.
+
+Detection rules, all tested:
+
+- **A positive LH strip** puts ovulation about a day later; the surge precedes
+  it. The latest positive in a cycle wins, and positives before the cycle start
+  are ignored.
+- **A temperature rise** must clear the prior six readings' mean by 0.2°C and
+  **hold for three days**, which rules out a single warm morning. Ovulation sits
+  just before the first raised reading. Without six prior readings there is no
+  baseline and no claim is made.
+- **The strip beats the thermometer** when both exist: it detects the surge
+  ahead of ovulation, while temperature can only confirm afterwards.
+
+`LUTEAL_STD_DEV_DAYS` is 2.2, deliberately wider than the ~1.5 days reported for
+the luteal phase itself, because this is a population figure standing in for a
+personal one we have not measured. Learning each person's own luteal length from
+past signalled cycles is the obvious next improvement.
+
+`predictNextCycle` and `projectCycleWindows` both take an optional signal and
+**return exactly as before without one** — a test asserts the two paths are
+identical when no signal is present, so the many people who will never take a
+temperature are unaffected. `projectCycleWindows` replaces only its first window
+with the measured one and drops any later window that would then overlap,
+preserving the no-day-belongs-to-two-cycles rule and keeping Today and the
+calendar in agreement.
+
+`MODEL_VERSION` is now `v3`; snapshots record it and `recordPredictionIfChanged`
+compares it, so stored predictions stay attributable to the model that made them.

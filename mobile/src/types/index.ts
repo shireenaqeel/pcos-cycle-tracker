@@ -113,6 +113,9 @@ export type SexTag = 'none' | 'protected' | 'unprotected' | 'solo' | 'high_drive
 
 export type FlowIntensity = 'spotting' | 'light' | 'medium' | 'heavy' | 'clots';
 
+/** Result of an ovulation predictor (LH) strip. */
+export type LhTest = 'negative' | 'positive';
+
 export type MovementLevel = 'none' | 'light' | 'moderate' | 'intense';
 
 /**
@@ -143,6 +146,7 @@ export interface DailySymptomLog {
   flow: FlowIntensity | null;
   /** What was taken today, free text — inositol, metformin, the pill, painkillers. */
   medications: string | null;
+  lhTest: LhTest | null;
 }
 
 export interface PredictionSnapshot {

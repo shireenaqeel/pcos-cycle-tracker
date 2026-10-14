@@ -12,6 +12,7 @@ import { SectionLabel, SoftCard } from '../components/Soft';
 import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
+import { detectOvulation } from '../engine/ovulation';
 import { projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
@@ -46,7 +47,12 @@ export function CalendarScreen({ navigation }: Props) {
           listSymptomLogs(profile.id),
         ]);
         if (!active) return;
-        const windows = cycles.length === 0 ? [] : projectCycleWindows(cycles, profile.phenotype);
+        const lastStart = cycles.length === 0 ? null : cycles[cycles.length - 1].startDate;
+        const signal = lastStart === null ? null : detectOvulation(symptoms, lastStart);
+        const windows =
+          cycles.length === 0
+            ? []
+            : projectCycleWindows(cycles, profile.phenotype, undefined, undefined, signal);
         setWindowCount(windows.length);
         setCalendar(buildCycleCalendar(cycles, symptoms, windows));
       })();

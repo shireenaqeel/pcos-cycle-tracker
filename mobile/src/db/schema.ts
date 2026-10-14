@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS daily_symptom_log (
   medications TEXT,
   moods TEXT,
   discharge TEXT,
-  sex TEXT
+  sex TEXT,
+  lh_test TEXT
 );
 
 CREATE TABLE IF NOT EXISTS prediction_snapshot (
@@ -113,6 +114,14 @@ export const MIGRATIONS: { toVersion: number; columns: { table: string; column: 
       // Whether bleeds are real cycles or scheduled by a method changes what the
       // clinical thresholds mean, so this is not merely profile decoration.
       { table: 'user_profile', column: 'contraception', type: 'TEXT' },
+    ],
+  },
+  {
+    toVersion: 7,
+    columns: [
+      // A measured ovulation signal, which predicts far better than counting
+      // days for an irregular cycle. basal_temp already exists from v2.
+      { table: 'daily_symptom_log', column: 'lh_test', type: 'TEXT' },
     ],
   },
 ];

@@ -62,6 +62,7 @@ export async function applyImport(plan: ImportPlan): Promise<void> {
         medications: entry.medications,
         foodNote: entry.foodNote,
         otherNote: entry.otherNote,
+        lhTest: entry.lhTest,
       });
     }
     await db.execAsync('COMMIT');
