@@ -15,9 +15,17 @@ import { Alert, Switch } from 'react-native';
 
 import { listCycleLogs } from '../db/cycles';
 import { deleteAllRecords } from '../db/reset';
-import { getOrCreateProfile, setAppLock, setPhenotype, setReminderPrefs } from '../db/profile';
+import {
+  LOCAL_USER_ID,
+  getOrCreateProfile,
+  setAppLock,
+  setPhenotype,
+  setReminderPrefs,
+} from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
 import { exportEverything } from '../lib/exportData';
+import { applyImport, chooseBackup } from '../lib/importData';
+import { describePlan } from '../lib/importPlan';
 import {
   cancelReminders,
   remindersSupported,
@@ -127,6 +135,47 @@ export function SettingsScreen(_props: Props) {
       }
     } catch {
       Alert.alert('Could not export', 'Something went wrong writing the file.');
+    } finally {
+      setWorking(null);
+    }
+  }
+
+  async function restoreFromBackup() {
+    setWorking('import');
+    try {
+      const chosen = await chooseBackup();
+      if (chosen === null) return;
+
+      const { plan } = chosen;
+      if (plan.cyclesToAdd.length === 0 && plan.logsToWrite.length === 0) {
+        Alert.alert(
+          'Nothing to restore',
+          plan.unreadable > 0
+            ? "That file couldn't be read as a backup from this app."
+            : 'Everything in that file is already recorded here.'
+        );
+        return;
+      }
+
+      // Always confirm: this runs against existing history, and the counts are
+      // the only way someone can tell a sensible merge from a wrong file.
+      Alert.alert('Restore this backup?', describePlan(plan), [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restore',
+          onPress: async () => {
+            await applyImport(plan);
+            successFeedback();
+            const [cycles, symptoms] = await Promise.all([
+              listCycleLogs(LOCAL_USER_ID),
+              listSymptomLogs(LOCAL_USER_ID),
+            ]);
+            setCounts({ cycles: cycles.length, symptoms: symptoms.length });
+          },
+        },
+      ]);
+    } catch {
+      Alert.alert('Could not read that file', 'It may not be a backup exported from this app.');
     } finally {
       setWorking(null);
     }
@@ -292,11 +341,16 @@ export function SettingsScreen(_props: Props) {
         <Row label="Days with symptoms" value={`${counts.symptoms}`} />
         <Text style={styles.note}>
           All of it is stored on this device only. There is no account, no sync, and no analytics
-          with access to it.
+          with access to it — which also means a lost phone loses the lot unless you export.
         </Text>
         <Pressable style={styles.action} onPress={exportData} disabled={working === 'export'}>
           <Text style={styles.actionText}>
             {working === 'export' ? 'Preparing…' : 'Export everything as a file'}
+          </Text>
+        </Pressable>
+        <Pressable style={styles.action} onPress={restoreFromBackup} disabled={working === 'import'}>
+          <Text style={styles.actionText}>
+            {working === 'import' ? 'Reading…' : 'Restore from a backup file'}
           </Text>
         </Pressable>
         <Pressable style={styles.action} onPress={confirmDeleteAll}>

@@ -916,3 +916,35 @@ darken the offending colour in 1% steps until it clears, which preserves the
 hue — rather than guessed. **Re-run that check after any palette edit**, since
 a livelier colour that makes text unreadable is a worse outcome than a dull
 one, especially on a screen someone reads while unwell.
+
+## Restoring from a backup
+
+Export without import is a dead end, and losing a phone was the most frequent
+complaint in reviews of other trackers — people losing a decade of history to a
+handset change or a bad update.
+
+The merge rules live in **`src/lib/importPlan.ts`, which has no native or
+database import at all**. That is not stylistic: pulling the DB layer in once
+made the module unloadable under jest (expo-sqlite reaches for expo-asset,
+which does not resolve in tests), so the riskiest logic in the app could not be
+tested. `src/lib/importData.ts` holds the picker and the write; the rules stay
+pure. **Do not merge them back together.**
+
+Two rules protect what is already on the device:
+
+- **Periods dedupe on start date.** Cycle ids are random at insert, so importing
+  the same file twice would otherwise silently double a history. Verified
+  idempotent by test.
+- **An existing day is never overwritten.** A day recorded here may be richer
+  than the one in an older backup, so the local copy wins and the skip is
+  counted and reported.
+
+A backup file is **untrusted input** — it comes from outside the app and may be
+hand-edited, truncated or the wrong file entirely. Every entry is shape-checked,
+wrongly-typed fields are dropped rather than stored, and unreadable entries are
+counted so the confirmation can say so. The write is one transaction: a
+half-applied restore would leave a history neither the person nor the app could
+reason about, with no server copy to reconcile against.
+
+The restore always confirms with counts first. Those counts are the only way
+someone can tell a sensible merge from the wrong file.

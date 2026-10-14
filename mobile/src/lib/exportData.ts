@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { format } from 'date-fns';
 
+import { SCHEMA_VERSION } from '../db/schema';
 import { listCycleLogs } from '../db/cycles';
 import { listPredictionSnapshots } from '../db/predictions';
 import { getOrCreateProfile } from '../db/profile';
@@ -26,6 +27,9 @@ export async function exportEverything(): Promise<{ shared: boolean; path: strin
   const payload = {
     exportedAt: new Date().toISOString(),
     app: 'Cycle Engine',
+    // Stamped so a restore can tell which shape it is reading. Files exported
+    // before this existed simply lack it.
+    schemaVersion: SCHEMA_VERSION,
     profile: {
       phenotype: profile.phenotype,
       createdAt: profile.createdAt,
