@@ -870,3 +870,31 @@ Two implementation notes worth not relearning:
   `Petal`), never called from inside a `map`. The first version did call a hook
   in a loop — stable only by accident, because the array length happened to be
   constant.
+
+## Icons and charts carry the logging screens
+
+Research into visually-rich trackers kept naming two things this app lacked:
+"clear, colourful icons" for logging and "easy-to-read graphs" for history. It
+had rows of text pills and columns of numbers, which is precisely the generic
+look.
+
+**`components/TileGrid.tsx`** — a pictogram per option, four to a row.
+Thirty chips differ only by the word inside them, so finding "cramps" meant
+reading rather than looking; with an icon the shape is what you recognise and
+the label is confirmation. Fixed quarter-width slots, so rows stay even
+instead of wrapping raggedly the way pills of differing text length do.
+
+Every option in `content/trackers.ts` carries an `icon` from
+MaterialCommunityIcons (shipped with `@expo/vector-icons`, already a
+dependency). **Icon names were validated against the installed glyph map
+before being written** — all 75 of them. A wrong name renders as nothing at
+all rather than failing loudly, so guessing them is not safe.
+
+**`components/CycleChart.tsx`** —
+
+- `CycleLengthChart`: recent cycles as bars against a shaded 21–35 day band,
+  with out-of-band bars tinted. A column of numbers gives each length; the
+  chart gives the *shape* — drifting, alternating, scattered — which is what
+  someone is trying to see and what a clinician asks about.
+- `FrequencyBars`: what gets logged most, so recurring symptoms are visible
+  rather than buried in history.

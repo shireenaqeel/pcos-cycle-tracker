@@ -5,10 +5,12 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { CycleLengthChart, FrequencyBars } from '../components/CycleChart';
 import { SYMPTOM_LABELS } from '../content/trackers';
 import { listCycleLogs } from '../db/cycles';
 import { LOCAL_USER_ID } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
+import { cycleGaps } from '../engine/gaps';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
 import { clinicalReview, type ClinicalReview } from '../engine/clinical';
 import { phaseInsights, type PhaseInsights } from '../engine/phases';
@@ -26,6 +28,7 @@ export function InsightsScreen({ navigation }: Props) {
   const colors = useThemeColors();
   const [cycles, setCycles] = useState<CycleLog[] | null>(null);
   const [phases, setPhases] = useState<PhaseInsights | null>(null);
+  const [symptomCounts, setSymptomCounts] = useState<{ label: string; count: number }[]>([]);
   const [review, setReview] = useState<ClinicalReview | null>(null);
 
   useFocusEffect(
@@ -40,6 +43,23 @@ export function InsightsScreen({ navigation }: Props) {
         setCycles(loadedCycles);
         setPhases(phaseInsights(loadedCycles, symptoms));
         setReview(clinicalReview(loadedCycles, symptoms));
+
+        // Most-logged symptoms, so the chart shows what actually recurs.
+        const tally = new Map<string, number>();
+        for (const entry of symptoms) {
+          for (const tag of entry.symptomTags) {
+            tally.set(tag, (tally.get(tag) ?? 0) + 1);
+          }
+        }
+        setSymptomCounts(
+          [...tally.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([tag, count]) => ({
+              label: SYMPTOM_LABELS[tag as keyof typeof SYMPTOM_LABELS] ?? tag,
+              count,
+            }))
+        );
       })();
       return () => {
         active = false;
@@ -125,6 +145,7 @@ export function InsightsScreen({ navigation }: Props) {
           <Text style={styles.big}>
             {insights.shortestCycleDays}–{insights.longestCycleDays} days
           </Text>
+          <CycleLengthChart lengths={cycleGaps(cycles).map((gap) => gap.cycleLengthDays)} />
           <Stat label="Average" value={`${insights.averageCycleDays?.toFixed(1)} days`} />
           <Stat label="Median" value={`${insights.medianCycleDays?.toFixed(1)} days`} />
           <Stat label="Shortest to longest" value={`${insights.spreadDays} days apart`} />
@@ -219,6 +240,13 @@ export function InsightsScreen({ navigation }: Props) {
               </Text>
             </>
           )}
+        </View>
+      )}
+
+      {symptomCounts.length > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>What you log most</Text>
+          <FrequencyBars rows={symptomCounts} tint={colors.apricot} />
         </View>
       )}
 

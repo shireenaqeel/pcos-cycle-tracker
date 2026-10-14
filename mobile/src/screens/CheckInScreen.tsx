@@ -7,11 +7,13 @@ import { format, isToday } from 'date-fns';
 import { SleepSlider, StressScale, WaterMeter } from '../components/CheckInControls';
 import { FadeInUp } from '../components/Motion';
 import { PetalFall } from '../components/Scenery';
-import { Blob, Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
+import { Blob, SectionLabel, SoftCard, Squish } from '../components/Soft';
+import { TileGrid } from '../components/TileGrid';
 import {
   DISCHARGE_OPTIONS,
   FLOW_OPTIONS,
   MOOD_OPTIONS,
+  MOVEMENT_OPTIONS,
   SEX_OPTIONS,
   SYMPTOM_GROUPS,
 } from '../content/trackers';
@@ -38,13 +40,6 @@ import type {
 } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CheckIn'>;
-
-const MOVEMENT_OPTIONS: { value: MovementLevel; label: string }[] = [
-  { value: 'none', label: 'Rested' },
-  { value: 'light', label: 'A little' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'intense', label: 'Hard' },
-];
 
 /** Adds or removes a value, so every grid behaves identically. */
 function toggle<T>(list: T[], value: T): T[] {
@@ -178,62 +173,44 @@ export function CheckInScreen({ navigation, route }: Props) {
 
         <SoftCard tint={colors.petal}>
           <SectionLabel>Bleeding</SectionLabel>
-          <View style={styles.grid}>
-            {FLOW_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                tint={colors.surface}
-                selected={flow === option.value}
-                onPress={() => setFlow(flow === option.value ? null : option.value)}
-              />
-            ))}
-          </View>
+          <TileGrid
+            options={FLOW_OPTIONS}
+            tint={colors.petal}
+            selected={flow === null ? [] : [flow]}
+            onToggle={(value) => setFlow(flow === value ? null : value)}
+          />
         </SoftCard>
 
         <SoftCard tint={colors.lilac}>
           <SectionLabel>Mood — as many as fit</SectionLabel>
-          <View style={styles.grid}>
-            {MOOD_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                tint={colors.surface}
-                selected={moods.includes(option.value)}
-                onPress={() => setMoods((current) => toggle(current, option.value))}
-              />
-            ))}
-          </View>
+          <TileGrid
+            options={MOOD_OPTIONS}
+            tint={colors.lilac}
+            selected={moods}
+            onToggle={(value) => setMoods((current) => toggle(current, value))}
+          />
         </SoftCard>
 
         {SYMPTOM_GROUPS.map((group) => (
           <SoftCard key={group.title}>
             <SectionLabel>{group.title}</SectionLabel>
-            <View style={styles.grid}>
-              {group.options.map((option) => (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  selected={tags.includes(option.value)}
-                  onPress={() => setTags((current) => toggle(current, option.value))}
-                />
-              ))}
-            </View>
+            <TileGrid
+              options={group.options}
+              tint={colors.apricot}
+              selected={tags}
+              onToggle={(value) => setTags((current) => toggle(current, value))}
+            />
           </SoftCard>
         ))}
 
         <SoftCard>
           <SectionLabel>Discharge</SectionLabel>
-          <View style={styles.grid}>
-            {DISCHARGE_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                selected={discharge === option.value}
-                onPress={() => setDischarge(discharge === option.value ? null : option.value)}
-              />
-            ))}
-          </View>
+          <TileGrid
+            options={DISCHARGE_OPTIONS}
+            tint={colors.sage}
+            selected={discharge === null ? [] : [discharge]}
+            onToggle={(value) => setDischarge(discharge === value ? null : value)}
+          />
           <Text style={styles.note}>
             Clumpy, grey or unusual-smelling discharge is worth raising with a clinician rather
             than only tracking.
@@ -242,16 +219,12 @@ export function CheckInScreen({ navigation, route }: Props) {
 
         <SoftCard>
           <SectionLabel>Sex and drive</SectionLabel>
-          <View style={styles.grid}>
-            {SEX_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                selected={sex.includes(option.value)}
-                onPress={() => setSex((current) => toggle(current, option.value))}
-              />
-            ))}
-          </View>
+          <TileGrid
+            options={SEX_OPTIONS}
+            tint={colors.lilac}
+            selected={sex}
+            onToggle={(value) => setSex((current) => toggle(current, value))}
+          />
         </SoftCard>
 
         <SoftCard tint={colors.apricot}>
@@ -271,16 +244,12 @@ export function CheckInScreen({ navigation, route }: Props) {
 
         <SoftCard>
           <SectionLabel>Movement</SectionLabel>
-          <View style={styles.grid}>
-            {MOVEMENT_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                selected={movement === option.value}
-                onPress={() => setMovement(movement === option.value ? null : option.value)}
-              />
-            ))}
-          </View>
+          <TileGrid
+            options={MOVEMENT_OPTIONS}
+            tint={colors.sage}
+            selected={movement === null ? [] : [movement]}
+            onToggle={(value) => setMovement(movement === value ? null : value)}
+          />
         </SoftCard>
 
         <SoftCard>
@@ -380,11 +349,6 @@ const makeStyles = (colors: ThemeColors) =>
     headerSub: {
       ...typography.bodySmall,
       color: colors.textMuted,
-    },
-    grid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: spacing.sm,
     },
     note: {
       ...typography.micro,
