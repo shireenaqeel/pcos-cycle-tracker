@@ -16,11 +16,13 @@ import { Alert, Switch } from 'react-native';
 import { listCycleLogs } from '../db/cycles';
 import { deleteAllRecords } from '../db/reset';
 import { CONTRACEPTION_OPTIONS } from '../content/contraception';
+import { TRACKER_CATEGORIES, categoryEnabled } from '../content/trackers';
 import {
   LOCAL_USER_ID,
   getOrCreateProfile,
   setAppLock,
   setContraception,
+  setEnabledTrackers,
   setPhenotype,
   setReminderPrefs,
 } from '../db/profile';
@@ -40,7 +42,7 @@ import { successFeedback, warningFeedback } from '../lib/feedback';
 import { paletteFor, THEME_OPTIONS, useTheme } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
-import type { Contraception, Phenotype } from '../types';
+import type { Contraception, Phenotype, TrackerCategory } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -58,6 +60,7 @@ export function SettingsScreen(_props: Props) {
   const dark = useColorScheme() === 'dark';
   const [phenotype, setCurrent] = useState<Phenotype | null>(null);
   const [method, setMethod] = useState<Contraception | null>(null);
+  const [enabled, setEnabled] = useState<TrackerCategory[] | null>(null);
   const [counts, setCounts] = useState<{ cycles: number; symptoms: number } | null>(null);
   const [reminders, setReminders] = useState(false);
   const [reminderHour, setReminderHour] = useState(20);
@@ -76,6 +79,7 @@ export function SettingsScreen(_props: Props) {
         if (!active) return;
         setCurrent(profile.phenotype);
         setMethod(profile.contraception);
+        setEnabled(profile.enabledTrackers);
         setCounts({ cycles: cycles.length, symptoms: symptoms.length });
         setReminders(profile.remindersEnabled);
         setReminderHour(profile.reminderHour);
@@ -128,6 +132,18 @@ export function SettingsScreen(_props: Props) {
       hour,
     });
     successFeedback();
+  }
+
+  function toggleCategory(id: TrackerCategory) {
+    // Null means "nothing turned off yet", so the first tap has to start from
+    // the full list rather than from an empty one.
+    const current = enabled ?? TRACKER_CATEGORIES.map((category) => category.id);
+    const next = current.includes(id)
+      ? current.filter((value) => value !== id)
+      : [...current, id];
+
+    setEnabled(next);
+    void setEnabledTrackers(next);
   }
 
   async function exportData() {
@@ -272,6 +288,24 @@ export function SettingsScreen(_props: Props) {
             );
           })}
         </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>What the check-in asks</Text>
+        <Text style={styles.cardBody}>
+          Turn off anything that doesn't apply to you. Nothing already recorded is deleted — a
+          section you hide simply stops being offered.
+        </Text>
+        {TRACKER_CATEGORIES.map((category) => (
+          <View key={category.id} style={styles.switchRow}>
+            <Text style={styles.switchLabel}>{category.label}</Text>
+            <Switch
+              value={categoryEnabled(enabled, category.id)}
+              onValueChange={() => toggleCategory(category.id)}
+              trackColor={{ true: colors.accent, false: colors.border }}
+            />
+          </View>
+        ))}
       </View>
 
       <View style={styles.card}>

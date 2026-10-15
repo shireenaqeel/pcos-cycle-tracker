@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export const CREATE_TABLES_SQL = `
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS user_profile (
   reminders_enabled INTEGER,
   reminder_hour INTEGER,
   app_lock_enabled INTEGER,
-  contraception TEXT
+  contraception TEXT,
+  enabled_trackers TEXT
 );
 
 CREATE TABLE IF NOT EXISTS cycle_log (
@@ -122,6 +123,13 @@ export const MIGRATIONS: { toVersion: number; columns: { table: string; column: 
       // A measured ovulation signal, which predicts far better than counting
       // days for an irregular cycle. basal_temp already exists from v2.
       { table: 'daily_symptom_log', column: 'lh_test', type: 'TEXT' },
+    ],
+  },
+  {
+    toVersion: 8,
+    columns: [
+      // Null keeps every section, so existing installs are unaffected.
+      { table: 'user_profile', column: 'enabled_trackers', type: 'TEXT' },
     ],
   },
 ];

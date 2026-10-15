@@ -1,5 +1,5 @@
 import { getDb } from './client';
-import type { Contraception, Phenotype, UserProfile } from '../types';
+import type { Contraception, Phenotype, TrackerCategory, UserProfile } from '../types';
 
 const LOCAL_USER_ID = 'local'; // single-user, on-device; no auth for the MVP
 
@@ -14,6 +14,7 @@ interface UserProfileRow {
   reminder_hour: number | null;
   app_lock_enabled: number | null;
   contraception: string | null;
+  enabled_trackers: string | null;
 }
 
 function rowToProfile(row: UserProfileRow): UserProfile {
@@ -28,6 +29,10 @@ function rowToProfile(row: UserProfileRow): UserProfile {
     reminderHour: row.reminder_hour ?? 20,
     appLockEnabled: row.app_lock_enabled === 1,
     contraception: row.contraception as UserProfile['contraception'],
+    enabledTrackers:
+      row.enabled_trackers === null || row.enabled_trackers === undefined
+        ? null
+        : (JSON.parse(row.enabled_trackers) as TrackerCategory[]),
   };
 }
 
@@ -56,6 +61,7 @@ export async function getOrCreateProfile(): Promise<UserProfile> {
     reminderHour: 20,
     appLockEnabled: false,
     contraception: null,
+    enabledTrackers: null,
   };
 }
 
@@ -78,6 +84,15 @@ export async function setReminderPrefs(input: {
     `UPDATE user_profile SET reminders_enabled = ?, reminder_hour = ? WHERE id = ?`,
     input.enabled ? 1 : 0,
     input.hour,
+    LOCAL_USER_ID
+  );
+}
+
+export async function setEnabledTrackers(values: TrackerCategory[]): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `UPDATE user_profile SET enabled_trackers = ? WHERE id = ?`,
+    JSON.stringify(values),
     LOCAL_USER_ID
   );
 }

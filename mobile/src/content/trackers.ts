@@ -2,6 +2,7 @@ import type { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type {
   DischargeType,
+  TrackerCategory,
   FlowIntensity,
   MoodTag,
   MovementLevel,
@@ -62,8 +63,13 @@ export const MOOD_OPTIONS: TrackerOption<MoodTag>[] = [
   { value: 'detached', label: 'Detached', icon: 'cloud-outline' },
 ];
 
-export const SYMPTOM_GROUPS: { title: string; options: TrackerOption<SymptomTag>[] }[] = [
+export const SYMPTOM_GROUPS: {
+  id: TrackerCategory;
+  title: string;
+  options: TrackerOption<SymptomTag>[];
+}[] = [
   {
+    id: 'pain',
     title: 'Pain',
     options: [
       { value: 'cramps', label: 'Cramps', icon: 'lightning-bolt-outline' },
@@ -77,6 +83,7 @@ export const SYMPTOM_GROUPS: { title: string; options: TrackerOption<SymptomTag>
     ],
   },
   {
+    id: 'gut',
     title: 'Gut',
     options: [
       { value: 'bloating', label: 'Bloating', icon: 'balloon' },
@@ -89,6 +96,7 @@ export const SYMPTOM_GROUPS: { title: string; options: TrackerOption<SymptomTag>
     ],
   },
   {
+    id: 'energy',
     title: 'Energy and sleep',
     options: [
       { value: 'fatigue', label: 'Fatigue', icon: 'battery-outline' },
@@ -99,6 +107,7 @@ export const SYMPTOM_GROUPS: { title: string; options: TrackerOption<SymptomTag>
     ],
   },
   {
+    id: 'skin',
     title: 'Skin and hair',
     options: [
       { value: 'acne', label: 'Acne', icon: 'face-woman-outline' },
@@ -111,6 +120,7 @@ export const SYMPTOM_GROUPS: { title: string; options: TrackerOption<SymptomTag>
     ],
   },
   {
+    id: 'other_symptoms',
     title: 'Other',
     options: [
       { value: 'hot_flush', label: 'Hot flush', icon: 'thermometer' },
@@ -166,3 +176,38 @@ export const SYMPTOM_LABELS: Record<SymptomTag, string> = Object.fromEntries(
 export const MOOD_LABELS: Record<MoodTag, string> = Object.fromEntries(
   MOOD_OPTIONS.map((option) => [option.value, option.label])
 ) as Record<MoodTag, string>;
+
+/**
+ * Every section of the daily check-in, in the order it appears.
+ *
+ * People repeatedly ask to turn off what does not apply to them, and resent it
+ * when apps take the choice away. Seventeen sections is a lot to scroll past if
+ * half are irrelevant.
+ */
+export const TRACKER_CATEGORIES: { id: TrackerCategory; label: string }[] = [
+  { id: 'flow', label: 'Bleeding' },
+  { id: 'mood', label: 'Mood' },
+  { id: 'pain', label: 'Pain' },
+  { id: 'gut', label: 'Gut' },
+  { id: 'energy', label: 'Energy and sleep symptoms' },
+  { id: 'skin', label: 'Skin and hair' },
+  { id: 'other_symptoms', label: 'Other symptoms' },
+  { id: 'discharge', label: 'Discharge' },
+  { id: 'sex', label: 'Sex and drive' },
+  { id: 'signals', label: 'Ovulation signals' },
+  { id: 'stress', label: 'Stress' },
+  { id: 'water', label: 'Water' },
+  { id: 'sleep', label: 'Sleep' },
+  { id: 'movement', label: 'Movement' },
+  { id: 'medication', label: 'Medication' },
+  { id: 'food', label: 'Food' },
+  { id: 'notes', label: 'Anything else' },
+];
+
+/** Null means nothing has been turned off, so everything shows. */
+export function categoryEnabled(
+  enabled: TrackerCategory[] | null,
+  id: TrackerCategory
+): boolean {
+  return enabled === null || enabled.includes(id);
+}

@@ -1054,3 +1054,30 @@ One bug worth remembering: the stress labels were passed to `splitByNumber` in
 the wrong order, so the screen would have reported headaches clustering on
 *lower*-stress days when the opposite was true. A test caught it. `splitByNumber`
 takes **low label first**; check that ordering whenever a habit is added.
+
+## Choosing what the check-in asks
+
+Seventeen sections is a lot to scroll past when half are irrelevant, and users
+of other trackers ask for this repeatedly — and resent it when the choice is
+taken away or paywalled.
+
+`TRACKER_CATEGORIES` in `src/content/trackers.ts` is the registry; each symptom
+group carries the same `id` so a group can be toggled like any other section.
+`categoryEnabled(enabled, id)` is the only place the semantics live:
+
+- **`null` means nothing has been turned off** and everything shows. That is the
+  state every existing install is already in, so the migration changes nobody's
+  screen.
+- **`[]` means everything is off**, which is a real choice and distinct from
+  `null`. The first toggle therefore starts from the full list rather than from
+  an empty one, or turning one thing off would silently hide the other sixteen.
+
+Turning a section off never deletes anything — it stops being offered, and
+previously recorded values are left intact and still shown on the day and
+history screens. With everything off, the check-in says where to turn it back
+on rather than appearing broken.
+
+Deliberately **category toggles only, not custom tags**. A user-defined tag
+would mean breaking the closed `TrackerOption<T extends string>` union and the
+`SymptomTag` type that `clinical.ts`, `phases.ts` and `correlations.ts` all
+depend on, which is a much larger change than it looks.

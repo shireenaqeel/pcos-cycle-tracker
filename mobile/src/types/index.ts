@@ -1,5 +1,25 @@
 export type ThemeName = 'blush' | 'meadow' | 'dusk' | 'clay';
 
+/** A toggleable section of the daily check-in. */
+export type TrackerCategory =
+  | 'flow'
+  | 'mood'
+  | 'pain'
+  | 'gut'
+  | 'energy'
+  | 'skin'
+  | 'other_symptoms'
+  | 'discharge'
+  | 'sex'
+  | 'signals'
+  | 'stress'
+  | 'water'
+  | 'sleep'
+  | 'movement'
+  | 'medication'
+  | 'food'
+  | 'notes';
+
 export type Contraception =
   | 'none'
   | 'combined_pill'
@@ -28,6 +48,8 @@ export interface UserProfile {
   reminderHour: number;
   appLockEnabled: boolean;
   contraception: Contraception | null;
+  /** Null means everything; otherwise only these sections appear. */
+  enabledTrackers: TrackerCategory[] | null;
 }
 
 export type EntrySource = 'logged' | 'backfilled';

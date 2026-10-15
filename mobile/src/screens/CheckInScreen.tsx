@@ -17,8 +17,10 @@ import {
   MOVEMENT_OPTIONS,
   SEX_OPTIONS,
   SYMPTOM_GROUPS,
+  TRACKER_CATEGORIES,
+  categoryEnabled,
 } from '../content/trackers';
-import { LOCAL_USER_ID } from '../db/profile';
+import { LOCAL_USER_ID, getOrCreateProfile } from '../db/profile';
 import { deleteSymptomLog, getSymptomLogForDate, saveSymptomLog } from '../db/symptoms';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
 import { successFeedback, warningFeedback } from '../lib/feedback';
@@ -33,6 +35,7 @@ import {
 } from '../theme';
 import type {
   DischargeType,
+  TrackerCategory,
   LhTest,
   FlowIntensity,
   MoodTag,
@@ -96,9 +99,14 @@ export function CheckInScreen({ navigation, route }: Props) {
   const [basalTemp, setBasalTemp] = useState<number | null>(null);
   const [existingEntry, setExistingEntry] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [enabled, setEnabled] = useState<TrackerCategory[] | null>(null);
   // Petals play over the sheet for a beat on save, so logging a day lands as a
   // small moment rather than the screen simply vanishing.
   const [celebrating, setCelebrating] = useState(false);
+
+  useEffect(() => {
+    getOrCreateProfile().then((profile) => setEnabled(profile.enabledTrackers));
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -136,6 +144,8 @@ export function CheckInScreen({ navigation, route }: Props) {
     (hydration === 0 ? 0 : 1) +
     (sleep === 0 ? 0 : 1) +
     (movement === null ? 0 : 1);
+
+  const shows = (id: TrackerCategory) => categoryEnabled(enabled, id);
 
   async function save() {
     setBusy(true);
@@ -192,6 +202,7 @@ export function CheckInScreen({ navigation, route }: Props) {
           </LinearGradient>
         </View>
 
+        {shows('flow') && (
         <SoftCard tint={colors.petal}>
           <SectionLabel>Bleeding</SectionLabel>
           <TileGrid
@@ -201,7 +212,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             onToggle={(value) => setFlow(flow === value ? null : value)}
           />
         </SoftCard>
+        )}
 
+        {shows('mood') && (
         <SoftCard tint={colors.lilac}>
           <SectionLabel>Mood — as many as fit</SectionLabel>
           <TileGrid
@@ -211,8 +224,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             onToggle={(value) => setMoods((current) => toggle(current, value))}
           />
         </SoftCard>
+        )}
 
-        {SYMPTOM_GROUPS.map((group) => (
+        {SYMPTOM_GROUPS.filter((group) => shows(group.id)).map((group) => (
           <SoftCard key={group.title}>
             <SectionLabel>{group.title}</SectionLabel>
             <TileGrid
@@ -224,6 +238,7 @@ export function CheckInScreen({ navigation, route }: Props) {
           </SoftCard>
         ))}
 
+        {shows('discharge') && (
         <SoftCard>
           <SectionLabel>Discharge</SectionLabel>
           <TileGrid
@@ -237,7 +252,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             than only tracking.
           </Text>
         </SoftCard>
+        )}
 
+        {shows('sex') && (
         <SoftCard>
           <SectionLabel>Sex and drive</SectionLabel>
           <TileGrid
@@ -247,22 +264,30 @@ export function CheckInScreen({ navigation, route }: Props) {
             onToggle={(value) => setSex((current) => toggle(current, value))}
           />
         </SoftCard>
+        )}
 
+        {shows('stress') && (
         <SoftCard tint={colors.apricot}>
           <SectionLabel>Stress</SectionLabel>
           <StressScale level={stress} onChange={setStress} />
         </SoftCard>
+        )}
 
+        {shows('water') && (
         <SoftCard tint={colors.sage}>
           <SectionLabel>Water</SectionLabel>
           <WaterMeter count={hydration} onChange={setHydration} />
         </SoftCard>
+        )}
 
+        {shows('sleep') && (
         <SoftCard>
           <SectionLabel>Sleep</SectionLabel>
           <SleepSlider hours={sleep} onChange={setSleep} />
         </SoftCard>
+        )}
 
+        {shows('movement') && (
         <SoftCard>
           <SectionLabel>Movement</SectionLabel>
           <TileGrid
@@ -272,7 +297,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             onToggle={(value) => setMovement(movement === value ? null : value)}
           />
         </SoftCard>
+        )}
 
+        {shows('signals') && (
         <SoftCard tint={colors.lilac}>
           <SectionLabel>Ovulation signals</SectionLabel>
           <Text style={styles.note}>
@@ -296,7 +323,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             inputMode="decimal"
           />
         </SoftCard>
+        )}
 
+        {shows('medication') && (
         <SoftCard>
           <SectionLabel>Medication and supplements</SectionLabel>
           <TextInput
@@ -308,7 +337,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             multiline
           />
         </SoftCard>
+        )}
 
+        {shows('food') && (
         <SoftCard>
           <SectionLabel>Food</SectionLabel>
           <TextInput
@@ -320,7 +351,9 @@ export function CheckInScreen({ navigation, route }: Props) {
             multiline
           />
         </SoftCard>
+        )}
 
+        {shows('notes') && (
         <SoftCard>
           <SectionLabel>Anything else going on</SectionLabel>
           <TextInput
@@ -332,6 +365,17 @@ export function CheckInScreen({ navigation, route }: Props) {
             multiline
           />
         </SoftCard>
+        )}
+
+        {TRACKER_CATEGORIES.every((category) => !shows(category.id)) && (
+          <SoftCard>
+            <SectionLabel>Nothing to show</SectionLabel>
+            <Text style={styles.note}>
+              Every section is switched off in Settings, under "What the check-in asks". Turn one
+              back on and it reappears here — nothing you recorded was deleted.
+            </Text>
+          </SoftCard>
+        )}
 
         {existingEntry && (
           <Squish onPress={clearDay} disabled={busy} haptic={false}>
