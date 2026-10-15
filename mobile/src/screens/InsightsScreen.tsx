@@ -13,6 +13,7 @@ import { listSymptomLogs } from '../db/symptoms';
 import { cycleGaps } from '../engine/gaps';
 import { cycleInsights, type CycleInsights } from '../engine/insights';
 import { clinicalReview, type ClinicalReview } from '../engine/clinical';
+import { habitInsights, type HabitInsights } from '../engine/correlations';
 import { phaseInsights, type PhaseInsights } from '../engine/phases';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { fonts, radius, spacing, typography, useThemeColors, useThemedStyles, type ThemeColors } from '../theme';
@@ -30,6 +31,7 @@ export function InsightsScreen({ navigation }: Props) {
   const [phases, setPhases] = useState<PhaseInsights | null>(null);
   const [symptomCounts, setSymptomCounts] = useState<{ label: string; count: number }[]>([]);
   const [review, setReview] = useState<ClinicalReview | null>(null);
+  const [habits, setHabits] = useState<HabitInsights | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -44,6 +46,7 @@ export function InsightsScreen({ navigation }: Props) {
         setCycles(loadedCycles);
         setPhases(phaseInsights(loadedCycles, symptoms));
         setReview(clinicalReview(loadedCycles, symptoms, new Date(), profile.contraception));
+        setHabits(habitInsights(symptoms));
 
         // Most-logged symptoms, so the chart shows what actually recurs.
         const tally = new Map<string, number>();
@@ -255,6 +258,41 @@ export function InsightsScreen({ navigation }: Props) {
         </View>
       )}
 
+      {habits !== null && habits.comparisons.length > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Logged together</Text>
+          <Text style={styles.cardBody}>
+            Things that showed up on the same days. This is co-occurrence, not cause — a bad night
+            caused by cramps looks identical here to cramps on a badly-slept day.
+          </Text>
+
+          {habits.comparisons.map((item) => (
+            <View key={`${item.habit}-${item.symptom}`} style={styles.habitRow}>
+              <Text style={styles.habitHeadline}>
+                {SYMPTOM_LABELS[item.symptom]} on {Math.round(item.moreRate * 100)}% of your{' '}
+                {item.moreLabel} days
+              </Text>
+              <Text style={styles.habitAgainst}>
+                against {Math.round(item.lessRate * 100)}% on {item.lessLabel} days
+              </Text>
+              <Text style={styles.note}>
+                {item.moreDays} and {item.lessDays} days respectively.
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {habits !== null && habits.hasEnoughData && habits.comparisons.length === 0 && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Logged together</Text>
+          <Text style={styles.empty}>
+            Nothing you log lines up clearly with your sleep, stress, water or movement yet. That
+            is a real result, not a gap — plenty of symptoms simply do not track daily habits.
+          </Text>
+        </View>
+      )}
+
       {symptomCounts.length > 0 && (
         <View style={styles.card}>
           <Text style={styles.cardLabel}>What you log most</Text>
@@ -397,6 +435,20 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     flagSource: {
       ...typography.micro,
       color: colors.textFaint,
+    },
+    habitRow: {
+      borderTopColor: colors.border,
+      borderTopWidth: 1,
+      gap: 2,
+      paddingTop: spacing.sm,
+    },
+    habitHeadline: {
+      ...typography.bodySmall,
+      color: colors.text,
+    },
+    habitAgainst: {
+      ...typography.caption,
+      color: colors.textMuted,
     },
     linkCard: {
       alignItems: 'center',

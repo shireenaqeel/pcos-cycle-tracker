@@ -1025,3 +1025,32 @@ calendar in agreement.
 
 `MODEL_VERSION` is now `v3`; snapshots record it and `recordPredictionIfChanged`
 compares it, so stored predictions stay attributable to the model that made them.
+
+## Habit comparisons
+
+`src/engine/correlations.ts` compares how often each symptom was logged on one
+kind of day against another — shorter nights against longer ones, higher-stress
+days against calmer ones, days with medication against days without.
+
+**Splits use this person's own median, never a fixed cutoff.** Saying "under six
+hours" would assert a threshold the app has no evidence for; a median split only
+ever claims "your shorter nights versus your longer ones", which is a statement
+about their data and nothing else. Movement and medication split on kind
+instead, having no meaningful median.
+
+**This is co-occurrence and the wording must never exceed that.** A bad night
+caused by cramps produces identical numbers to cramps on a badly-slept night,
+and nothing here can separate them. The engine therefore returns *two rates with
+their day counts* rather than a single effect size — there is no number to
+misread as an effect — and a test asserts the labels contain no causal verb.
+The card says so in as many words.
+
+Silence is the default: a comparison needs at least five days either side of the
+split, at least three instances of the symptom, and a gap of 20 percentage
+points. When habits are recorded but nothing lines up, the screen says that
+plainly — "a real result, not a gap" — rather than showing an empty card.
+
+One bug worth remembering: the stress labels were passed to `splitByNumber` in
+the wrong order, so the screen would have reported headaches clustering on
+*lower*-stress days when the opposite was true. A test caught it. `splitByNumber`
+takes **low label first**; check that ordering whenever a habit is added.
