@@ -4,9 +4,10 @@ import type { CycleLog, DailySymptomLog, SymptomTag } from '../types';
 /**
  * The stretch before a period, where PMS-type symptoms are expected to cluster.
  * Counted backwards from the next period's start, since that is the event the
- * pattern is anchored to.
+ * pattern is anchored to. Shared with `phaseMap`, so the stretch Today calls
+ * premenstrual is the same one this pattern was counted over.
  */
-const PREMENSTRUAL_DAYS = 5;
+export const PREMENSTRUAL_DAYS = 5;
 
 export interface SymptomPattern {
   tag: SymptomTag;

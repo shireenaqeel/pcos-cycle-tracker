@@ -12,6 +12,7 @@ import { SectionLabel, SoftCard } from '../components/Soft';
 import { listCycleLogs } from '../db/cycles';
 import { getOrCreateProfile } from '../db/profile';
 import { listSymptomLogs } from '../db/symptoms';
+import { suppressesOvulation } from '../content/contraception';
 import { detectOvulation } from '../engine/ovulation';
 import { projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
@@ -54,7 +55,14 @@ export function CalendarScreen({ navigation }: Props) {
             ? []
             : projectCycleWindows(cycles, profile.phenotype, undefined, undefined, signal);
         setWindowCount(windows.length);
-        setCalendar(buildCycleCalendar(cycles, symptoms, windows));
+        const built = buildCycleCalendar(cycles, symptoms, windows, new Date(), signal);
+        // On a method that suppresses ovulation the bleeds are scheduled by the
+        // method, so there is no ovulation or premenstrual stretch to point at.
+        setCalendar(
+          suppressesOvulation(profile.contraception)
+            ? { ...built, premenstrualDates: new Set(), likelyOvulationDates: new Set() }
+            : built
+        );
       })();
       return () => {
         active = false;

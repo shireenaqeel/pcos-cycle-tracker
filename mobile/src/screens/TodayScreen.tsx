@@ -7,6 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { differenceInCalendarDays, format, getHours } from 'date-fns';
 
 import { CycleRing } from '../components/CycleRing';
+import { PhaseCard } from '../components/PhaseCard';
 import { FadeInUp } from '../components/Motion';
 import { GrassStrip, Landscape } from '../components/Scenery';
 import { Chip, SectionLabel, SoftCard, Squish } from '../components/Soft';
@@ -14,7 +15,11 @@ import { listCycleLogs } from '../db/cycles';
 import { recordPredictionIfChanged } from '../db/predictions';
 import { LOCAL_USER_ID, getOrCreateProfile } from '../db/profile';
 import { getSymptomLogForDate, listSymptomLogs, saveSymptomLog } from '../db/symptoms';
+import { CONTRACEPTION_LABELS, suppressesOvulation } from '../content/contraception';
+import { cycleInsights } from '../engine/insights';
 import { detectOvulation, type OvulationSignal } from '../engine/ovulation';
+import { mapCyclePhases } from '../engine/phaseMap';
+import { phaseInsights } from '../engine/phases';
 import { MODEL_VERSION, predictNextCycle, projectCycleWindows } from '../engine/predictor';
 import { buildCycleCalendar, type CycleCalendar } from '../lib/cycleDays';
 import { fromIsoDate, toIsoDate } from '../lib/dates';
@@ -30,7 +35,14 @@ import {
   type ThemeColors,
 } from '../theme';
 import { MOOD_LABELS, SYMPTOM_LABELS } from '../content/trackers';
-import type { CycleLog, CycleRangePrediction, DailySymptomLog, MoodTag } from '../types';
+import type {
+  Contraception,
+  CycleLog,
+  CycleRangePrediction,
+  DailySymptomLog,
+  MoodTag,
+  SymptomTag,
+} from '../types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Today'>,
@@ -44,6 +56,9 @@ interface Loaded {
   today: DailySymptomLog | null;
   name: string | null;
   signal: OvulationSignal | null;
+  typicalPeriodDays: number | null;
+  premenstrualPattern: SymptomTag[] | null;
+  contraception: Contraception | null;
 }
 
 /** A handful of common ones for a one-tap log; the full set lives in the check-in. */
@@ -100,7 +115,21 @@ export function TodayScreen({ navigation }: Props) {
       }
     }
 
-    return { cycles, prediction, calendar, today, name: profile.displayName, signal };
+    const pattern = phaseInsights(cycles, symptoms);
+
+    return {
+      cycles,
+      prediction,
+      calendar,
+      today,
+      name: profile.displayName,
+      signal,
+      typicalPeriodDays: cycleInsights(cycles).typicalPeriodLengthDays,
+      premenstrualPattern: pattern.hasEnoughData
+        ? pattern.clustered.slice(0, 3).map((p) => p.tag)
+        : null,
+      contraception: profile.contraception,
+    };
   }, []);
 
   useFocusEffect(
@@ -125,6 +154,27 @@ export function TodayScreen({ navigation }: Props) {
 
   const { cycles, prediction, calendar, today, name, signal } = data;
   const bleedingToday = calendar.periodDates.has(toIsoDate(new Date()));
+  const lastCycle = cycles.length === 0 ? null : cycles[cycles.length - 1];
+
+  // The predictor speaks in day offsets from the last start; the ring and the
+  // phase map count that start as day 1, the same way `currentCycleDay` does.
+  const windowDays =
+    prediction === null
+      ? null
+      : { start: prediction.rangeStartDay + 1, end: prediction.rangeEndDay + 1 };
+
+  const phaseMap =
+    windowDays === null || calendar.currentCycleDay === null || lastCycle === null
+      ? null
+      : mapCyclePhases({
+          cycleDay: calendar.currentCycleDay,
+          windowStartDay: windowDays.start,
+          windowEndDay: windowDays.end,
+          periodLengthDays:
+            lastCycle.endDate === null ? data.typicalPeriodDays : periodLength(lastCycle),
+          bleedingToday,
+          signal,
+        });
   // The most recent period with no end date recorded. While one exists, ending
   // it is the action someone is most likely here for — previously the only way
   // to reach it was to find that period in the history list.
@@ -178,8 +228,8 @@ export function TodayScreen({ navigation }: Props) {
             <>
               <CycleRing
                 cycleDay={calendar.currentCycleDay}
-                windowStartDay={prediction.rangeStartDay}
-                windowEndDay={prediction.rangeEndDay}
+                windowStartDay={prediction.rangeStartDay + 1}
+                windowEndDay={prediction.rangeEndDay + 1}
                 caption={
                   bleedingToday
                     ? 'period today'
@@ -250,6 +300,31 @@ export function TodayScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('CheckIn', {})}
         />
       </FadeInUp>
+
+      {phaseMap !== null &&
+        lastCycle !== null &&
+        calendar.currentCycleDay !== null &&
+        (suppressesOvulation(data.contraception) && data.contraception !== null ? (
+          <SoftCard delay={270}>
+            <SectionLabel>Where you are in your cycle</SectionLabel>
+            <Text style={styles.cardBody}>
+              With your method ({CONTRACEPTION_LABELS[data.contraception]}), bleeds follow its
+              schedule rather than ovulation, so cycle phases and PMS timing don't apply. The
+              expected bleed above still does.
+            </Text>
+          </SoftCard>
+        ) : (
+          <PhaseCard
+            delay={270}
+            map={phaseMap}
+            cycleDay={calendar.currentCycleDay}
+            lastPeriodStart={lastCycle.startDate}
+            signal={signal}
+            premenstrualPattern={data.premenstrualPattern}
+            confidence={prediction?.confidence ?? 0}
+            onLearnMore={() => navigation.navigate('Learn')}
+          />
+        ))}
 
       {prediction !== null && (
         <SoftCard delay={300}>

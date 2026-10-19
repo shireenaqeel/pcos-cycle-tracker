@@ -11,6 +11,18 @@
     ]
   },
   {
+    "id": "cycle-phases",
+    "title": "The phases of a cycle, and which ones this app shows",
+    "tags": ["basics", "phases", "pms"],
+    "phenotypeRelevance": ["regular", "mildly_irregular", "diagnosed_pcos", "unknown"],
+    "body": "A cycle runs from the first day of one period to the first day of the next. In between it is usually described in phases: the period itself, the follicular phase while an egg matures, ovulation, and the luteal phase after it, which ends when the next period starts.\n\nThe luteal phase tends to be the steadier half, often around two weeks. Most of the difference between a short cycle and a long one comes from the follicular phase, which is why a late ovulation means a late period. With PCOS, ovulation is often delayed and some cycles have none at all.\n\nWithout a test, this app estimates ovulation by counting about two weeks back from your expected period. It is shown as a range, as wide as your period window, and phrased as 'if you ovulate this cycle', because it cannot tell whether a cycle ovulated at all. It is not reliable enough to plan or prevent a pregnancy. A positive LH test or a sustained rise in morning temperature replaces the estimate with a measured day, and only then does the app name the follicular and luteal phases.\n\nPMS symptoms usually appear in the days before a period. The app counts five days back from your predicted period window, so the PMS estimate is a range that widens or narrows with the window. Once enough is logged, Your numbers and Today also show which of your own symptoms tend to cluster before a period. That pattern is a count of what you've recorded, not a diagnosis of PMS or PMDD.",
+    "citations": [
+      "Bull JR et al., Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles, npj Digital Medicine (2019)",
+      "American College of Obstetricians and Gynecologists, Premenstrual Syndrome (PMS), patient FAQ",
+      "Teede HJ et al., International Evidence-Based Guideline for the Assessment and Management of Polycystic Ovary Syndrome (2023)"
+    ]
+  },
+  {
     "id": "pcos-cycle-length",
     "title": "How PCOS tends to affect cycle length",
     "tags": ["pcos", "cycle-length"],

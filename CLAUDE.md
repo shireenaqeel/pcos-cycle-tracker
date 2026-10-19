@@ -720,11 +720,11 @@ the work was making the privacy real and closing the feature gaps.
 
 - **Home-screen widget** — needs native config Expo Go can't load; wait for a
   real build.
-- **Ovulation and fertile-window prediction** — every mainstream app shows one.
-  Deliberately absent: for irregular and PCOS cycles ovulation timing is
-  exactly what's unreliable, and a confident fertile window would be the least
-  honest thing in the app. Revisit only with a real signal (LH tests, sustained
-  basal temperature) rather than counting back from a predicted date.
+- **A fertile window** — every mainstream app shows one. Still absent: it
+  invites use for contraception, and for irregular and PCOS cycles ovulation
+  timing is exactly what's unreliable. An *ovulation estimate* now exists (see
+  "Cycle phases and PMS"), as a wide, conditional range with a pregnancy
+  caveat — that is as far as counting back from a predicted date should go.
 - **Choosing which check-in steps appear** — users complain loudly when apps
   remove this; ten fixed steps is already a lot to tap through.
 
@@ -1081,3 +1081,49 @@ Deliberately **category toggles only, not custom tags**. A user-defined tag
 would mean breaking the closed `TrackerOption<T extends string>` union and the
 `SymptomTag` type that `clinical.ts`, `phases.ts` and `correlations.ts` all
 depend on, which is a much larger change than it looks.
+
+## Cycle phases and PMS
+
+`src/engine/phaseMap.ts` lays the current cycle out as contiguous day ranges —
+period, between periods, premenstrual, the expected window, and late once it
+passes — and says which one today is in. `PhaseCard` on Today draws it as a
+bar with a "you are here" marker and lists each phase with real dates; the
+calendar paints premenstrual days in lilac, a measured ovulation as a solid
+sage day and an estimated one as a sage outline.
+
+Rules that must hold, all tested:
+
+- **Ovulation, follicular and luteal are named as phases only from a measured
+  signal** (`detectOvulation`). Without one the stretch after a period is
+  `between`.
+- **Without a signal, ovulation is still estimated** — the owner asked for it,
+  reversing the earlier "no ovulation without a signal" rule.
+  `estimateOvulationRange` moves the period window back by
+  `LUTEAL_MEAN_DAYS` and keeps its width and confidence. Not narrowed: cycle
+  length already contains the luteal phase's spread, so the shifted window is
+  if anything too wide, which is the safe direction. It travels as
+  `likelyOvulation`, an overlay rather than a segment, because for a PCOS
+  history it runs into the premenstrual days. Copy is conditional ("if you
+  ovulate this cycle"), always carries the not-for-pregnancy-planning line, and
+  the calendar draws it as an outline so it never looks like a measured day.
+- **PMS is a range, inheriting the window's.** Its start is
+  `PREMENSTRUAL_DAYS` back from the window, so it runs from that many days
+  before the earliest predicted start to that many before the latest.
+  `PREMENSTRUAL_DAYS` is exported from `phases.ts` and shared, so the stretch
+  Today calls premenstrual is the one the symptom pattern was counted over.
+- **The personal PMS line reuses `phaseInsights`**, with its existing bar for
+  speaking (two measured cycles, three logged days either side). It names
+  what was logged more often; it never diagnoses PMS or PMDD.
+- **Segments tile the cycle exactly** — every day from 1 to the end belongs to
+  one phase. A recorded bleed outranks the typical period length.
+- On an ovulation-suppressing method the card is replaced by a sentence saying
+  phases don't apply, and the calendar drops PMS and ovulation days, for the same reason
+  `clinicalReview` withholds cycle checks.
+
+The "cycle-phases" Learn article describes this behaviour; change both together.
+
+**Day offsets vs cycle days.** The predictor returns offsets from the last
+start (offset 0 is that day); `currentCycleDay`, the ring and the phase map
+count it as day 1. Today previously passed raw offsets to the ring, which
+greyed it as overdue on the window's last day while the headline said "inside
+the window". Convert with `+ 1` at the boundary; don't mix the two.

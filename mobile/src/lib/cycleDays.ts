@@ -1,6 +1,8 @@
 import { addDays, differenceInCalendarDays } from 'date-fns';
 
 import { fromIsoDate, toIsoDate } from './dates';
+import { estimateOvulationRange, type OvulationSignal } from '../engine/ovulation';
+import { PREMENSTRUAL_DAYS } from '../engine/phases';
 import type { ProjectedWindow } from '../engine/predictor';
 import type { CycleLog, DailySymptomLog } from '../types';
 
@@ -12,6 +14,12 @@ export interface CycleCalendar {
   periodDates: Set<string>;
   /** Every date inside any projected window, not just the next one. */
   predictedDates: Set<string>;
+  /** The days before each projected window where PMS would be expected to start. */
+  premenstrualDates: Set<string>;
+  /** A measured ovulation, from an LH test or temperature rise. */
+  ovulationDate: string | null;
+  /** Estimated from each window; the current cycle's is dropped once measured. */
+  likelyOvulationDates: Set<string>;
   symptomDates: Set<string>;
   /** Which day of the current cycle today is, counting the last start as day 1. */
   currentCycleDay: number | null;
@@ -36,7 +44,8 @@ export function buildCycleCalendar(
   cycles: CycleLog[],
   symptoms: DailySymptomLog[],
   windows: ProjectedWindow[],
-  today: Date = new Date()
+  today: Date = new Date(),
+  signal: OvulationSignal | null = null
 ): CycleCalendar {
   const periodDates = new Set<string>();
   for (const cycle of cycles) {
@@ -50,19 +59,37 @@ export function buildCycleCalendar(
 
   let predictedWindow: CycleCalendar['predictedWindow'] = null;
   const predictedDates = new Set<string>();
+  const premenstrualDates = new Set<string>();
+  const likelyOvulationDates = new Set<string>();
   if (lastPeriodStart !== null) {
     const anchor = fromIsoDate(lastPeriodStart);
+    // Each estimate stays inside its own cycle: after the previous window, or
+    // after the last recorded start for the first one.
+    let earliestOffset = 1;
     for (const window of windows) {
       const start = toIsoDate(addDays(anchor, window.rangeStartDay));
       const end = toIsoDate(addDays(anchor, window.rangeEndDay));
       if (window.cycleIndex === 1) predictedWindow = { start, end };
       for (const date of datesBetween(start, end)) predictedDates.add(date);
+      for (let offset = PREMENSTRUAL_DAYS; offset >= 1; offset--) {
+        premenstrualDates.add(toIsoDate(addDays(anchor, window.rangeStartDay - offset)));
+      }
+      if (!(window.cycleIndex === 1 && signal !== null)) {
+        const estimate = estimateOvulationRange(window.rangeStartDay, window.rangeEndDay);
+        for (let offset = Math.max(estimate.start, earliestOffset); offset <= estimate.end; offset++) {
+          likelyOvulationDates.add(toIsoDate(addDays(anchor, offset)));
+        }
+      }
+      earliestOffset = window.rangeEndDay + 1;
     }
   }
 
   return {
     periodDates,
     predictedDates,
+    premenstrualDates,
+    ovulationDate: signal === null ? null : signal.date,
+    likelyOvulationDates,
     symptomDates: new Set(symptoms.map((entry) => entry.date)),
     currentCycleDay:
       lastPeriodStart === null

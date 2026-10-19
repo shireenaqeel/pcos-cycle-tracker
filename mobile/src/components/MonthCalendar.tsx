@@ -86,11 +86,26 @@ export function MonthCalendar({ calendar, onSelectDay }: Props) {
           const columnIndex = index % 7;
           const isPeriod = calendar.periodDates.has(iso);
           const isPredicted = !isPeriod && calendar.predictedDates.has(iso);
+          const isOvulation = !isPeriod && !isPredicted && calendar.ovulationDate === iso;
+          const isPremenstrual =
+            !isPeriod && !isPredicted && !isOvulation && calendar.premenstrualDates.has(iso);
+          const isLikelyOvulation =
+            !isPeriod &&
+            !isPredicted &&
+            !isOvulation &&
+            !isPremenstrual &&
+            calendar.likelyOvulationDates.has(iso);
           const band = isPeriod
             ? runEdges(day, columnIndex, calendar.periodDates)
             : isPredicted
               ? runEdges(day, columnIndex, calendar.predictedDates)
-              : null;
+              : isPremenstrual
+                ? runEdges(day, columnIndex, calendar.premenstrualDates)
+                : isOvulation
+                  ? { isFirst: true, isLast: true }
+                  : isLikelyOvulation
+                    ? runEdges(day, columnIndex, calendar.likelyOvulationDates)
+                    : null;
 
           return (
             <Pressable key={iso} style={styles.cell} onPress={() => onSelectDay(day)}>
@@ -98,9 +113,19 @@ export function MonthCalendar({ calendar, onSelectDay }: Props) {
                 <View
                   style={[
                     styles.band,
-                    isPeriod ? styles.bandPeriod : styles.bandPredicted,
+                    isPeriod
+                      ? styles.bandPeriod
+                      : isPredicted
+                        ? styles.bandPredicted
+                        : isPremenstrual
+                          ? styles.bandPremenstrual
+                          : isOvulation
+                            ? styles.bandOvulation
+                            : styles.bandLikelyOvulation,
                     band.isFirst && styles.bandFirst,
                     band.isLast && styles.bandLast,
+                    isLikelyOvulation && band.isFirst && styles.outlineFirst,
+                    isLikelyOvulation && band.isLast && styles.outlineLast,
                   ]}
                 />
               )}
@@ -126,12 +151,24 @@ export function MonthCalendar({ calendar, onSelectDay }: Props) {
         })}
       </View>
 
-      <Legend />
+      <Legend
+        showPremenstrual={calendar.premenstrualDates.size > 0}
+        showOvulation={calendar.ovulationDate !== null}
+        showLikelyOvulation={calendar.likelyOvulationDates.size > 0}
+      />
     </View>
   );
 }
 
-function Legend() {
+function Legend({
+  showPremenstrual,
+  showOvulation,
+  showLikelyOvulation,
+}: {
+  showPremenstrual: boolean;
+  showOvulation: boolean;
+  showLikelyOvulation: boolean;
+}) {
   const styles = useThemedStyles(makeStyles);
   const colors = useThemeColors();
 
@@ -145,6 +182,24 @@ function Legend() {
         <View style={[styles.legendSwatch, { backgroundColor: colors.accentSoft }]} />
         <Text style={styles.legendLabel}>Predicted</Text>
       </View>
+      {showPremenstrual && (
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: colors.lilac }]} />
+          <Text style={styles.legendLabel}>PMS likely</Text>
+        </View>
+      )}
+      {showLikelyOvulation && (
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, styles.legendEstimate]} />
+          <Text style={styles.legendLabel}>Ovulation likely</Text>
+        </View>
+      )}
+      {showOvulation && (
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: colors.sage }]} />
+          <Text style={styles.legendLabel}>Ovulation, measured</Text>
+        </View>
+      )}
       <View style={styles.legendItem}>
         <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
         <Text style={styles.legendLabel}>Symptoms</Text>
@@ -214,6 +269,26 @@ const makeStyles = (colors: ThemeColors) =>
     bandPredicted: {
       backgroundColor: colors.accentSoft,
     },
+    bandPremenstrual: {
+      backgroundColor: colors.lilac,
+    },
+    bandOvulation: {
+      backgroundColor: colors.sage,
+    },
+    // An outline rather than a fill: an estimate shouldn't look like the
+    // measured day, and the date stays on the plain surface. Side borders only
+    // at the ends of a run, or every cell would draw a seam.
+    bandLikelyOvulation: {
+      borderBottomWidth: 2,
+      borderColor: colors.sage,
+      borderTopWidth: 2,
+    },
+    outlineFirst: {
+      borderLeftWidth: 2,
+    },
+    outlineLast: {
+      borderRightWidth: 2,
+    },
     bandFirst: {
       borderBottomLeftRadius: 999,
       borderTopLeftRadius: 999,
@@ -259,6 +334,7 @@ const makeStyles = (colors: ThemeColors) =>
       borderTopColor: colors.border,
       borderTopWidth: 1,
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: spacing.md,
       marginTop: spacing.sm,
       paddingTop: spacing.sm,
@@ -272,6 +348,11 @@ const makeStyles = (colors: ThemeColors) =>
       borderRadius: 999,
       height: 14,
       width: 14,
+    },
+    legendEstimate: {
+      backgroundColor: 'transparent',
+      borderColor: colors.sage,
+      borderWidth: 2,
     },
     legendDot: {
       borderRadius: 999,

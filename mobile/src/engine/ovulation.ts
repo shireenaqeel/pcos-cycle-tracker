@@ -36,6 +36,24 @@ export interface OvulationSignal {
   cycleDay: number;
 }
 
+/**
+ * Where ovulation would most likely fall, given a predicted period window: the
+ * same window moved back by the typical luteal phase, in the window's own units.
+ *
+ * Not narrowed further, on purpose. Cycle length is the follicular phase plus
+ * the luteal one, so the cycle's spread already contains the luteal phase's
+ * and the shifted window is, if anything, wider than needed. That is the safe
+ * direction for a number people may read as fertility timing. It also says
+ * nothing about whether this cycle ovulates at all, which with PCOS is a real
+ * question; callers phrase it conditionally.
+ */
+export function estimateOvulationRange(
+  windowStart: number,
+  windowEnd: number
+): { start: number; end: number } {
+  return { start: windowStart - LUTEAL_MEAN_DAYS, end: windowEnd - LUTEAL_MEAN_DAYS };
+}
+
 function daysBetween(fromIso: string, toIso: string): number {
   return Math.round((new Date(toIso).getTime() - new Date(fromIso).getTime()) / 86_400_000);
 }
